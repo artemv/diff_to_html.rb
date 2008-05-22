@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'diff_to_html'
-  s.version = '1.0.0'
+  s.version = '1.0.1'
   s.date = '2008-05-23'
   
   s.summary = "Unified diff to HTML converter"
@@ -12,5 +12,5 @@ Gem::Specification.new do |s|
   
   s.has_rdoc = false
   
-  s.files = %w(diff_to_html.rb examples/diff.css examples/test.rb examples/test.sh init.rb lib README)
+  s.files = %w(lib/diff_to_html.rb examples/diff.css examples/test.rb examples/test.sh lib README)
 end
