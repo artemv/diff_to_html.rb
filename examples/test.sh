@@ -1,0 +1,1 @@
+ruby test.rb >out.html

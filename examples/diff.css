@@ -1,0 +1,68 @@
+ul.diff {
+  padding:0;
+}
+
+.diff table col.lineno {
+  width:4em;
+}
+
+.diff h2, .diff h2 a {
+  color:#333333;
+  font-size:14px;
+  letter-spacing:normal;
+  margin:0pt auto;
+}
+
+.diff h2 {
+  padding:0.1em 0pt 0.25em 0.5em;
+}
+
+table.diff {
+  font-size : 9pt;
+  font-family : "lucida console", "courier new", monospace;
+  white-space : pre;
+  border : 1px solid #D7D7D7;
+  border-collapse : collapse;
+  line-height : 110%;
+  width: 100%;  
+}  
+
+.diff tr {
+  background: white;
+}
+
+.diff td {
+  border : none;
+  padding : 0px 10px;
+  margin : 0px;
+}
+
+.diff td a {
+  text-decoration: none;
+}
+
+tr.a { background : #ddffdd; }
+
+tr.r { background : #ffdddd; }
+
+tr.range { background : #EAF2F5; color : #999; }
+
+td.ln {
+  background : #ECECEC; 
+  color : #aaa;
+  border-top:1px solid #999988;
+  border-bottom:1px solid #999988;
+  border-right:1px solid #D7D7D7;
+}
+
+.diff li {
+  background:#F7F7F7 none repeat scroll 0%;
+  border:1px solid #D7D7D7;
+  list-style-type:none;
+  margin:0pt 0pt 2em;
+  padding:2px;
+}
+
+.ln a {
+  color: #aaa;
+}
