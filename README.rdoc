@@ -1,28 +1,17 @@
-= WillPaginate
+= diff_to_html
 
-Pagination is just limiting the number of records displayed. Why should you let
-it get in your way while developing, then? This plugin makes magic happen. Did
-you ever want to be able to do just this on a model:
+This is a Ruby class for converting unified diff, like the one you get with 'svn diff', to HTML like in 
+changeset viewer of a tool like Trac, GitHub or Codenotifier, 
+e.g. http://codenotifier.com/projects/49/commits/47#F0.
 
-  Post.paginate :page => 1, :order => 'created_at DESC'
+It's based on code from http://gurge.com/blog/2006/10/03/subversion-diff-viewer-cgi-in-ruby/ (thanks Adam 
+Doppelt!), adopted lightly to support multifile diffs and have more familiar output. It definitely have 
+things to improve, so contribution/patches are very welcome.
 
-... and then render the page links with a single view helper? Well, now you
-can.
-
-Some resources to get you started:
-
-* Your mind reels with questions? Join our
-  {Google group}[http://groups.google.com/group/will_paginate].
-* The will_paginate project page: http://github.com/mislav/will_paginate
-* How to report bugs: http://github.com/mislav/will_paginate/wikis/report-bugs
-* Ryan Bates made an awesome screencast[http://railscasts.com/episodes/51],
-  check it out.
-
-== Installation
-
-The recommended way is that you get the gem:
-
-  gem install mislav-will_paginate --source http://gems.github.com/
+  require 'diff_to_html'
+  ...
+  converter = DiffToHtml.new
+  ...
 
 After that you don't need the will_paginate <i>plugin</i> in your Rails
 application anymore. Just add a simple require to the end of
