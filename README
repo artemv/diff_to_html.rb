@@ -1,15 +1,18 @@
-This is a ruby class for converting unified diff, like the one you get with 'svn diff', 
-to HTML like in changeset viewer of a tool like Trac, GitHub or Codenotifier, e.g. http://codenotifier.com/projects/49/commits/47#F0.
+This is a ruby class for converting unified diff, like the one you get with 'svn diff', to HTML like in 
+changeset viewer of a tool like Trac, GitHub or Codenotifier, 
+e.g. http://codenotifier.com/projects/49/commits/47#F0.
 
-It's based on code from http://gurge.com/blog/2006/10/03/subversion-diff-viewer-cgi-in-ruby/ (thanks Adam Doppelt!), adopted to support 
-multifile diffs and have more familiar output. It definitely have things to improve, contribution/patches are very welcome.
+It's based on code from http://gurge.com/blog/2006/10/03/subversion-diff-viewer-cgi-in-ruby/ (thanks Adam 
+Doppelt!), adopted lightly to support multifile diffs and have more familiar output. It definitely have 
+things to improve, so contribution/patches are very welcome.
 
- * install the gem: gem install artemv-diff_to_html --source=http://gems.github.com
- * go to gem's 'examples' dir (it's .../ruby/lib/ruby/gems/1.8/gems/artemv-diff_to_html-x.x.x/examples/) and run 'ruby test.rb >out.html' - 
-   this will get diff from sample 'svn diff' and generate out.html. Resulting html is linked to diff.css in 'examples' directory - you'll need
-   to copy it to your project's dir to use it.
- * To use in Rails project:
-   require 'diff_to_html'
-   ...
-   converter = DiffToHtml.new
-   ...
+* install the gem: gem install artemv-diff_to_html --source=http://gems.github.com
+* go to gem's 'examples' dir (it's .../ruby/lib/ruby/gems/1.8/gems/artemv-diff_to_html-x.x.x/examples/) and run 'ruby test.rb >out.html' - 
+  this will get diff from sample 'svn diff' and generate out.html. Resulting html is linked to diff.css in 'examples' directory - you'll need
+  to copy it to your project's dir to use it.
+* To use in Rails project:
+
+  require 'diff_to_html'
+  ...
+  converter = DiffToHtml.new
+  ...
