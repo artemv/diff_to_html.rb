@@ -123,7 +123,7 @@ EOF
           line = line[1..-1]
           
           if ((@last_op != ' ' and op == ' ') or (@last_op == ' ' and op != ' '))
-            flush_changes(result, left_ln, right_ln)
+            left_ln, right_ln = flush_changes(result, left_ln, right_ln)
           end
           
           # truncate and escape

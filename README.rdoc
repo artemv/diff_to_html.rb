@@ -22,6 +22,15 @@ things to improve, so contribution/patches are very welcome.
    converter = DiffToHtml.new
    ...
 
+* to use in any Ruby program:
+   
+   require 'rubygems'
+   gem 'artemv-diff_to_html'
+   require 'diff_to_html'
+   ...
+
+(just like in test.rb)
+   
 == License
 
 diff_to_html is released under the MIT license.
