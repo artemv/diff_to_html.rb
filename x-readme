@@ -1,5 +1,3 @@
-= diff_to_html.rb
-
 This is a Ruby class for converting unified diff, like the one you get with 'svn diff', to HTML like in 
 changeset viewer of a tool like Trac, GitHub or Codenotifier, 
 e.g. http://codenotifier.com/projects/49/commits/47#F0.
