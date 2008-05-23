@@ -12,8 +12,8 @@ things to improve, so contribution/patches are very welcome.
 * go to gem's 'examples' dir (it's .../ruby/lib/ruby/gems/1.8/gems/artemv-diff_to_html-x.x.x/examples/) and run 'ruby test.rb >out.html' - 
   this will get diff from sample 'svn diff' and generate out.html. Resulting html is linked to diff.css in 'examples' directory - you'll need
   to copy it to your project's dir to use it.
-* To use in Rails project:
 
+To use in Rails project:
 
   require 'diff_to_html'
   ...
