@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'diff_to_html'
-  s.version = '1.0.1'
+  s.version = '1.0.2'
   s.date = '2008-05-23'
   
   s.summary = "Unified diff to HTML converter"
