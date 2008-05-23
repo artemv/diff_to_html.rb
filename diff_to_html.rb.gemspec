@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.has_rdoc = true
   s.rdoc_options = ['--main', 'README.rdoc']
   s.rdoc_options << '--inline-source' << '--charset=UTF-8'
-  s.extra_rdoc_files = ['README.rdoc', 'LICENSE']
+  s.extra_rdoc_files = ['README.rdoc']
   
-  s.files = %w(lib/diff_to_html.rb examples/diff.css examples/test.rb examples/test.sh lib README.rdoc LICENSE)
+  s.files = %w(lib/diff_to_html.rb examples/diff.css examples/test.rb examples/test.sh lib README.rdoc)
 end
