@@ -10,7 +10,10 @@ Gem::Specification.new do |s|
   s.email = 'abublic@gmail.com'
   s.homepage = 'http://github.com/artemv/diff_to_html.rb'
   
-  s.has_rdoc = false
+  s.has_rdoc = true
+  s.rdoc_options = ['--main', 'README.rdoc']
+  s.rdoc_options << '--inline-source' << '--charset=UTF-8'
+  s.extra_rdoc_files = ['README.rdoc', 'LICENSE']
   
-  s.files = %w(lib/diff_to_html.rb examples/diff.css examples/test.rb examples/test.sh lib README)
+  s.files = %w(lib/diff_to_html.rb examples/diff.css examples/test.rb examples/test.sh lib README.rdoc LICENSE)
 end
