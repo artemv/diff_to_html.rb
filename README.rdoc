@@ -5,7 +5,7 @@ changeset viewer of a tool like Trac, GitHub or Codenotifier,
 e.g. http://codenotifier.com/projects/49/commits/47#F0.
 
 It's based on code from http://gurge.com/blog/2006/10/03/subversion-diff-viewer-cgi-in-ruby (thanks Adam 
-Doppelt!), adopted lightly to support multifile diffs and have more familiar output. It definitely have 
+Doppelt!), adopted lightly to support multifile diffs and to have more familiar output. It definitely have 
 things to improve, so contribution/patches are very welcome.
 
 * install the gem: 
