@@ -1,5 +1,4 @@
 require 'rubygems'
-gem 'artemv-diff_to_html'
 require 'diff_to_html'
 #require '../lib/diff_to_html.rb'
 diff = `svn diff -r 46:47 svn://hamptoncatlin.com/haml --diff-cmd diff -x "-U 2"`
