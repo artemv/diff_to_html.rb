@@ -25,7 +25,6 @@ things to improve, so contribution/patches are very welcome.
 * to use in any Ruby program:
    
    require 'rubygems'
-   gem 'artemv-diff_to_html'
    require 'diff_to_html'
    ...
 
