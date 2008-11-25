@@ -1,0 +1,3721 @@
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..57f183a
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,4 @@
++/doc
++/rails
++*.gem
++/coverage
+diff --git a/.manifest b/.manifest
+new file mode 100644
+index 0000000..be0c772
+--- /dev/null
++++ b/.manifest
+@@ -0,0 +1,49 @@
++CHANGELOG
++LICENSE
++README.rdoc
++Rakefile
++examples
++examples/apple-circle.gif
++examples/index.haml
++examples/index.html
++examples/pagination.css
++examples/pagination.sass
++init.rb
++lib
++lib/will_paginate
++lib/will_paginate.rb
++lib/will_paginate/array.rb
++lib/will_paginate/collection.rb
++lib/will_paginate/core_ext.rb
++lib/will_paginate/finder.rb
++lib/will_paginate/named_scope.rb
++lib/will_paginate/named_scope_patch.rb
++lib/will_paginate/version.rb
++lib/will_paginate/view_helpers.rb
++test
++test/boot.rb
++test/collection_test.rb
++test/console
++test/database.yml
++test/finder_test.rb
++test/fixtures
++test/fixtures/admin.rb
++test/fixtures/developer.rb
++test/fixtures/developers_projects.yml
++test/fixtures/project.rb
++test/fixtures/projects.yml
++test/fixtures/replies.yml
++test/fixtures/reply.rb
++test/fixtures/schema.rb
++test/fixtures/topic.rb
++test/fixtures/topics.yml
++test/fixtures/user.rb
++test/fixtures/users.yml
++test/helper.rb
++test/lib
++test/lib/activerecord_test_case.rb
++test/lib/activerecord_test_connector.rb
++test/lib/load_fixtures.rb
++test/lib/view_test_process.rb
++test/tasks.rake
++test/view_test.rb
+\ No newline at end of file
+diff --git a/CHANGELOG b/CHANGELOG
+new file mode 100644
+index 0000000..a75de89
+--- /dev/null
++++ b/CHANGELOG
+@@ -0,0 +1,92 @@
++== master
++
++* ActiveRecord 2.1: remove :include from count query when tables are not
++  referenced in :conditions
++
++== 2.3.2, released 2008-05-16
++
++* Fixed LinkRenderer#stringified_merge by removing "return" from iterator block
++* Ensure that 'href' values in pagination links are escaped URLs
++
++== 2.3.1, released 2008-05-04
++
++* Fixed page numbers not showing with custom routes and implicit first page
++* Try to use Hanna for documentation (falls back to default RDoc template if not)
++
++== 2.3.0, released 2008-04-29
++
++* Changed LinkRenderer to receive collection, options and reference to view template NOT in
++  constructor, but with the #prepare method. This is a step towards supporting passing of
++  LinkRenderer (or subclass) instances that may be preconfigured in some way
++* LinkRenderer now has #page_link and #page_span methods for easier customization of output in
++  subclasses
++* Changed page_entries_info() method to adjust its output according to humanized class name of
++  collection items. Override this with :entry_name parameter (singular).
++    
++    page_entries_info(@posts)
++    #-> "Displaying all 12 posts"
++    page_entries_info(@posts, :entry_name => 'item')
++    #-> "Displaying all 12 items"
++    
++== 2.2.3, released 2008-04-26
++
++* will_paginate gem is no longer published on RubyForge, but on
++  gems.github.com:
++  
++    gem sources -a http://gems.github.com/  (you only need to do this once)
++    gem install mislav-will_paginate
++    
++* extract reusable pagination testing stuff into WillPaginate::View
++* rethink the page URL construction mechanizm to be more bulletproof when
++  combined with custom routing for page parameter
++* test that anchor parameter can be used in pagination links
++
++== 2.2.2, released 2008-04-21
++
++* Add support for page parameter in custom routes like "/foo/page/2"
++* Change output of "page_entries_info" on single-page collection and erraneous
++  output with empty collection as reported by Tim Chater
++  
++== 2.2.1, released 2008-04-08
++
++* take less risky path when monkeypatching named_scope; fix that it no longer
++  requires ActiveRecord::VERSION
++* use strings in "respond_to?" calls to work around a bug in acts_as_ferret
++  stable (ugh)
++* add rake release task
++
++
++== 2.2.0, released 2008-04-07
++
++=== API changes
++* Rename WillPaginate::Collection#page_count to "total_pages" for consistency.
++  If you implemented this interface, change your implementation accordingly.
++* Remove old, deprecated style of calling Array#paginate as "paginate(page,
++  per_page)". If you want to specify :page, :per_page or :total_entries, use a
++  parameter hash.
++* Rename LinkRenderer#url_options to "url_for" and drastically optimize it
++
++=== View changes
++* Added "prev_page" and "next_page" CSS classes on previous/next page buttons
++* Add examples of pagination links styling in "examples/index.html"
++* Change gap in pagination links from "..." to
++  "<span class="gap">&hellip;</span>".
++* Add "paginated_section", a block helper that renders pagination both above and
++  below content in the block
++* Add rel="prev|next|start" to page links
++
++=== Other
++
++* Add ability to opt-in for Rails 2.1 feature "named_scope" by calling
++  WillPaginate.enable_named_scope (tested in Rails 1.2.6 and 2.0.2)
++* Support complex page parameters like "developers[page]"
++* Move Array#paginate definition to will_paginate/array.rb. You can now easily
++  use pagination on arrays outside of Rails:
++
++    gem 'will_paginate'
++    require 'will_paginate/array'
++    
++* Add "paginated_each" method for iterating through every record by loading only
++  one page of records at the time
++* Rails 2: Rescue from WillPaginate::InvalidPage error with 404 Not Found by
++  default
+diff --git a/LICENSE b/LICENSE
+new file mode 100644
+index 0000000..96a48cb
+--- /dev/null
++++ b/LICENSE
+@@ -0,0 +1,18 @@
++Copyright (c) 2007 PJ Hyett and Mislav MarohniÄ‡
++
++Permission is hereby granted, free of charge, to any person obtaining a copy of 
++this software and associated documentation files (the "Software"), to deal in 
++the Software without restriction, including without limitation the rights to 
++use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of 
++the Software, and to permit persons to whom the Software is furnished to do so, 
++subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in all 
++copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS 
++FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR 
++COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER 
++IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
++CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+diff --git a/README b/README
+deleted file mode 100644
+index 3594e49..0000000
+--- a/README
++++ /dev/null
+@@ -1,46 +0,0 @@
+-CanPaginate
+-
+-Ruby port by: PJ Hyett
+-Original php source: http://www.strangerstudios.com/sandbox/pagination/diggstyle.php
+-
+-Example usage: 
+-
+-app/controllers/posts_controller.rb
+-  
+-  @page = params[:page].to_i.zero? ? 1 : params[:page].to_i
+-  
+-app/views/posts/index.rhtml
+-
+-  <%= will_paginate(Post.count, Post::PER_PAGE) %>
+-
+-Copy the following css into your stylesheet for a good start:
+-
+-.pagination {
+-	padding: 3px;
+-	margin: 3px;
+-}
+-.pagination a {
+-	padding: 2px 5px 2px 5px;
+-	margin: 2px;
+-	border: 1px solid #aaaadd;
+-	text-decoration: none;
+-	color: #000099;
+-}
+-.pagination a:hover, div.pagination a:active {
+-	border: 1px solid #000099;
+-	color: #000;
+-}
+-.pagination span.current {
+-	padding: 2px 5px 2px 5px;
+-	margin: 2px;
+-	border: 1px solid #000099;
+-	font-weight: bold;
+-	background-color: #000099;
+-	color: #FFF;
+-}
+-.pagination span.disabled {
+-	padding: 2px 5px 2px 5px;
+-	margin: 2px;
+-	border: 1px solid #eee;
+-	color: #ddd;
+-}
+diff --git a/README.rdoc b/README.rdoc
+new file mode 100644
+index 0000000..fbce96f
+--- /dev/null
++++ b/README.rdoc
+@@ -0,0 +1,131 @@
++= WillPaginate
++
++Pagination is just limiting the number of records displayed. Why should you let
++it get in your way while developing, then? This plugin makes magic happen. Did
++you ever want to be able to do just this on a model:
++
++  Post.paginate :page => 1, :order => 'created_at DESC'
++
++... and then render the page links with a single view helper? Well, now you
++can.
++
++Some resources to get you started:
++
++* Your mind reels with questions? Join our
++  {Google group}[http://groups.google.com/group/will_paginate].
++* The will_paginate project page: http://github.com/mislav/will_paginate
++* How to report bugs: http://github.com/mislav/will_paginate/wikis/report-bugs
++* Ryan Bates made an awesome screencast[http://railscasts.com/episodes/51],
++  check it out.
++
++== Installation
++
++The recommended way is that you get the gem:
++
++  gem install mislav-will_paginate --source http://gems.github.com/
++
++After that you don't need the will_paginate <i>plugin</i> in your Rails
++application anymore. Just add a simple require to the end of
++"config/environment.rb":
++
++  gem 'mislav-will_paginate', '~> 2.2'
++  require 'will_paginate'
++
++That's it. Remember to install the gem on <b>all</b> machines that you are
++deploying to.
++
++<i>There are extensive
++{installation instructions}[http://github.com/mislav/will_paginate/wikis/installation]
++on {the wiki}[http://github.com/mislav/will_paginate/wikis].</i>
++
++
++== Example usage
++
++Use a paginate finder in the controller:
++
++  @posts = Post.paginate_by_board_id @board.id, :page => params[:page], :order => 'updated_at DESC'
++
++Yeah, +paginate+ works just like +find+ -- it just doesn't fetch all the
++records.  Don't forget to tell it which page you want, or it will complain!
++Read more on WillPaginate::Finder::ClassMethods.
++
++Render the posts in your view like you would normally do. When you need to render
++pagination, just stick this in:
++
++  <%= will_paginate @posts %>
++
++You're done. (Copy and paste the example fancy CSS styles from the bottom.) You
++can find the option list at WillPaginate::ViewHelpers.
++
++How does it know how much items to fetch per page? It asks your model by calling
++its <tt>per_page</tt> class method. You can define it like this:
++
++  class Post < ActiveRecord::Base
++    cattr_reader :per_page
++    @@per_page = 50
++  end
++
++... or like this:
++
++  class Post < ActiveRecord::Base
++    def self.per_page
++      50
++    end
++  end
++
++... or don't worry about it at all. WillPaginate defines it to be <b>30</b> by default.
++But you can always specify the count explicitly when calling +paginate+:
++
++  @posts = Post.paginate :page => params[:page], :per_page => 50
++
++The +paginate+ finder wraps the original finder and returns your resultset that now has
++some new properties. You can use the collection as you would with any ActiveRecord
++resultset. WillPaginate view helpers also need that object to be able to render pagination:
++
++  <ol>
++    <% for post in @posts -%>
++      <li>Render `post` in some nice way.</li>
++    <% end -%>
++  </ol>
++
++  <p>Now let's render us some pagination!</p>
++  <%= will_paginate @posts %>
++
++More detailed documentation:
++
++* WillPaginate::Finder::ClassMethods for pagination on your models;
++* WillPaginate::ViewHelpers for your views.
++
++
++== Authors and credits
++
++Authors::                Mislav Marohni-Ç, PJ Hyett
++Original announcement::  http://errtheblog.com/post/929 
++Original PHP source::    http://www.strangerstudios.com/sandbox/pagination/diggstyle.php
++
++All these people helped making will_paginate what it is now with their code
++contributions or just simply awesome ideas:
++
++Chris Wanstrath, Dr. Nic Williams, K. Adam Christensen, Mike Garey, Bence
++Golda, Matt Aimonetti, Charles Brian Quinn, Desi McAdam, James Coglan, Matijs
++van Zuijlen, Maria, Brendan Ribera, Todd Willey, Bryan Helmkamp, Jan Berkel,
++Lourens Naud+é, Rick Olson, Russell Norris, Piotr Usewicz, Chris Eppstein.
++
++
++== Usable pagination in the UI
++
++There are some CSS styles to get you started in the "examples/" directory. They
++are showcased in the <b>"examples/index.html"</b> file.
++
++More reading about pagination as design pattern:
++
++* Pagination 101:
++  http://kurafire.net/log/archive/2007/06/22/pagination-101
++* Pagination gallery:
++  http://www.smashingmagazine.com/2007/11/16/pagination-gallery-examples-and-good-practices/
++* Pagination on Yahoo Design Pattern Library:
++  http://developer.yahoo.com/ypatterns/parent.php?pattern=pagination
++
++Want to discuss, request features, ask questions? Join the
++{Google group}[http://groups.google.com/group/will_paginate].
++
+diff --git a/Rakefile b/Rakefile
+new file mode 100644
+index 0000000..cb68107
+--- /dev/null
++++ b/Rakefile
+@@ -0,0 +1,62 @@
++require 'rubygems'
++begin
++  hanna_dir = '/home/mislav/projects/hanna/lib'
++  $:.unshift hanna_dir if File.exists? hanna_dir
++  require 'hanna/rdoctask'
++rescue LoadError
++  require 'rake'
++  require 'rake/rdoctask'
++end
++load 'test/tasks.rake'
++
++desc 'Default: run unit tests.'
++task :default => :test
++
++desc 'Generate RDoc documentation for the will_paginate plugin.'
++Rake::RDocTask.new(:rdoc) do |rdoc|
++  rdoc.rdoc_files.include('README.rdoc', 'LICENSE', 'CHANGELOG').
++    include('lib/**/*.rb').
++    exclude('lib/will_paginate/named_scope*').
++    exclude('lib/will_paginate/array.rb').
++    exclude('lib/will_paginate/version.rb')
++  
++  rdoc.main = "README.rdoc" # page to start on
++  rdoc.title = "will_paginate documentation"
++  
++  rdoc.rdoc_dir = 'doc' # rdoc output folder
++  rdoc.options << '--inline-source' << '--charset=UTF-8'
++  rdoc.options << '--webcvs=http://github.com/mislav/will_paginate/tree/master/'
++end
++
++desc %{Update ".manifest" with the latest list of project filenames. Respect\
++.gitignore by excluding everything that git ignores. Update `files` and\
++`test_files` arrays in "*.gemspec" file if it's present.}
++task :manifest do
++  list = Dir['**/*'].sort
++  spec_file = Dir['*.gemspec'].first
++  list -= [spec_file] if spec_file
++  
++  File.read('.gitignore').each_line do |glob|
++    glob = glob.chomp.sub(/^\//, '')
++    list -= Dir[glob]
++    list -= Dir["#{glob}/**/*"] if File.directory?(glob) and !File.symlink?(glob)
++    puts "excluding #{glob}"
++  end
++
++  if spec_file
++    spec = File.read spec_file
++    spec.gsub! /^(\s* s.(test_)?files \s* = \s* )( \[ [^\]]* \] | %w\( [^)]* \) )/mx do
++      assignment = $1
++      bunch = $2 ? list.grep(/^test\//) : list
++      '%s%%w(%s)' % [assignment, bunch.join(' ')]
++    end
++      
++    File.open(spec_file,   'w') {|f| f << spec }
++  end
++  File.open('.manifest', 'w') {|f| f << list.join("\n") }
++end
++
++task :examples do
++  %x(haml examples/index.haml examples/index.html)
++  %x(sass examples/pagination.sass examples/pagination.css)
++end
+diff --git a/examples/apple-circle.gif b/examples/apple-circle.gif
+new file mode 100644
+index 0000000..df8cbf7
+Binary files /dev/null and b/examples/apple-circle.gif differ
+diff --git a/examples/index.haml b/examples/index.haml
+new file mode 100644
+index 0000000..e267dd8
+--- /dev/null
++++ b/examples/index.haml
+@@ -0,0 +1,69 @@
++!!!
++%html
++%head
++  %title Samples of pagination styling for will_paginate
++  %link{ :rel => 'stylesheet', :type => 'text/css', :href => 'pagination.css' }
++  %style{ :type => 'text/css' }
++    :sass
++      html
++        :margin 0
++        :padding 0
++        :background #999
++        :font normal 76% "Lucida Grande", Verdana, Helvetica, sans-serif
++      body
++        :margin 2em
++        :padding 2em
++        :border 2px solid gray
++        :background white
++        :color #222
++      h1
++        :font-size 2em
++        :font-weight normal
++        :margin 0 0 1em 0
++      h2
++        :font-size 1.4em
++        :margin 1em 0 .5em 0
++      pre
++        :font-size 13px
++        :font-family Monaco, "DejaVu Sans Mono", "Bitstream Vera Mono", "Courier New", monospace
++
++- pagination = '<span class="disabled prev_page">&laquo; Previous</span> <span class="current">1</span> <a href="./?page=2" rel="next">2</a> <a href="./?page=3">3</a> <a href="./?page=4">4</a> <a href="./?page=5">5</a> <a href="./?page=6">6</a> <a href="./?page=7">7</a> <a href="./?page=8">8</a> <a href="./?page=9">9</a> <span class="gap">&hellip;</span> <a href="./?page=29">29</a> <a href="./?page=30">30</a> <a href="./?page=2" rel="next" class="next_page">Next &raquo;</a>'
++- pagination_no_page_links = '<span class="disabled prev_page">&laquo; Previous</span>  <a href="./?page=2" rel="next" class="next_page">Next &raquo;</a>'
++
++%body
++  %h1 Samples of pagination styling for will_paginate
++  %p
++    Find these styles in <b>"examples/pagination.css"</b> of <i>will_paginate</i> library.
++    There is a Sass version of it for all you sassy people.
++  %p
++    Read about good rules for pagination:
++    %a{ :href => 'http://kurafire.net/log/archive/2007/06/22/pagination-101' } Pagination 101
++  %p
++    %em Warning:
++    page links below don't lead anywhere (so don't click on them).
++    
++  %h2 Unstyled pagination <span style="font-weight:normal">(<i>ewww!</i>)</span>
++  %div= pagination
++  
++  %h2 Digg.com
++  .digg_pagination= pagination
++
++  %h2 Digg-style, no page links
++  .digg_pagination= pagination_no_page_links
++  %p Code that renders this:
++  %pre= '<code>%s</code>' % %[<%= will_paginate @posts, :page_links => false %>].gsub('<', '&lt;').gsub('>', '&gt;')
++  
++  %h2 Digg-style, extra content
++  .digg_pagination
++    .page_info Displaying entries <b>1&nbsp;-&nbsp;6</b> of <b>180</b> in total
++    = pagination
++  %p Code that renders this:
++  %pre= '<code>%s</code>' % %[<div class="digg_pagination">\n  <div clas="page_info">\n    <%= page_entries_info @posts %>\n  </div>\n  <%= will_paginate @posts, :container => false %>\n</div>].gsub('<', '&lt;').gsub('>', '&gt;')
++  
++  %h2 Apple.com store
++  .apple_pagination= pagination
++  
++  %h2 Flickr.com
++  .flickr_pagination
++    = pagination
++    .page_info (118 photos)
+diff --git a/examples/index.html b/examples/index.html
+new file mode 100644
+index 0000000..6033abf
+--- /dev/null
++++ b/examples/index.html
+@@ -0,0 +1,92 @@
++<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
++<html>
++</html>
++<head>
++  <title>Samples of pagination styling for will_paginate</title>
++  <link href='pagination.css' rel='stylesheet' type='text/css' />
++  <style type='text/css'>
++    html {
++      margin: 0;
++      padding: 0;
++      background: #999;
++      font: normal 76% "Lucida Grande", Verdana, Helvetica, sans-serif; }
++    
++    body {
++      margin: 2em;
++      padding: 2em;
++      border: 2px solid gray;
++      background: white;
++      color: #222; }
++    
++    h1 {
++      font-size: 2em;
++      font-weight: normal;
++      margin: 0 0 1em 0; }
++    
++    h2 {
++      font-size: 1.4em;
++      margin: 1em 0 .5em 0; }
++    
++    pre {
++      font-size: 13px;
++      font-family: Monaco, "DejaVu Sans Mono", "Bitstream Vera Mono", "Courier New", monospace; }
++  </style>
++</head>
++<body>
++  <h1>Samples of pagination styling for will_paginate</h1>
++  <p>
++    Find these styles in <b>"examples/pagination.css"</b> of <i>will_paginate</i> library.
++    There is a Sass version of it for all you sassy people.
++  </p>
++  <p>
++    Read about good rules for pagination:
++    <a href='http://kurafire.net/log/archive/2007/06/22/pagination-101'>Pagination 101</a>
++  </p>
++  <p>
++    <em>Warning:</em>
++    page links below don't lead anywhere (so don't click on them).
++  </p>
++  <h2>
++    Unstyled pagination <span style="font-weight:normal">(<i>ewww!</i>)</span>
++  </h2>
++  <div>
++    <span class="disabled prev_page">&laquo; Previous</span> <span class="current">1</span> <a href="./?page=2" rel="next">2</a> <a href="./?page=3">3</a> <a href="./?page=4">4</a> <a href="./?page=5">5</a> <a href="./?page=6">6</a> <a href="./?page=7">7</a> <a href="./?page=8">8</a> <a href="./?page=9">9</a> <span class="gap">&hellip;</span> <a href="./?page=29">29</a> <a href="./?page=30">30</a> <a href="./?page=2" rel="next" class="next_page">Next &raquo;</a>
++  </div>
++  <h2>Digg.com</h2>
++  <div class='digg_pagination'>
++    <span class="disabled prev_page">&laquo; Previous</span> <span class="current">1</span> <a href="./?page=2" rel="next">2</a> <a href="./?page=3">3</a> <a href="./?page=4">4</a> <a href="./?page=5">5</a> <a href="./?page=6">6</a> <a href="./?page=7">7</a> <a href="./?page=8">8</a> <a href="./?page=9">9</a> <span class="gap">&hellip;</span> <a href="./?page=29">29</a> <a href="./?page=30">30</a> <a href="./?page=2" rel="next" class="next_page">Next &raquo;</a>
++  </div>
++  <h2>Digg-style, no page links</h2>
++  <div class='digg_pagination'>
++    <span class="disabled prev_page">&laquo; Previous</span>  <a href="./?page=2" rel="next" class="next_page">Next &raquo;</a>
++  </div>
++  <p>Code that renders this:</p>
++  <pre>
++    <code>&lt;%= will_paginate @posts, :page_links =&gt; false %&gt;</code>
++  </pre>
++  <h2>Digg-style, extra content</h2>
++  <div class='digg_pagination'>
++    <div class='page_info'>
++      Displaying entries <b>1&nbsp;-&nbsp;6</b> of <b>180</b> in total
++    </div>
++    <span class="disabled prev_page">&laquo; Previous</span> <span class="current">1</span> <a href="./?page=2" rel="next">2</a> <a href="./?page=3">3</a> <a href="./?page=4">4</a> <a href="./?page=5">5</a> <a href="./?page=6">6</a> <a href="./?page=7">7</a> <a href="./?page=8">8</a> <a href="./?page=9">9</a> <span class="gap">&hellip;</span> <a href="./?page=29">29</a> <a href="./?page=30">30</a> <a href="./?page=2" rel="next" class="next_page">Next &raquo;</a>
++  </div>
++  <p>Code that renders this:</p>
++  <pre>
++    <code>&lt;div class="digg_pagination"&gt;
++      &lt;div clas="page_info"&gt;
++        &lt;%= page_entries_info @posts %&gt;
++      &lt;/div&gt;
++      &lt;%= will_paginate @posts, :container =&gt; false %&gt;
++    &lt;/div&gt;</code>
++  </pre>
++  <h2>Apple.com store</h2>
++  <div class='apple_pagination'>
++    <span class="disabled prev_page">&laquo; Previous</span> <span class="current">1</span> <a href="./?page=2" rel="next">2</a> <a href="./?page=3">3</a> <a href="./?page=4">4</a> <a href="./?page=5">5</a> <a href="./?page=6">6</a> <a href="./?page=7">7</a> <a href="./?page=8">8</a> <a href="./?page=9">9</a> <span class="gap">&hellip;</span> <a href="./?page=29">29</a> <a href="./?page=30">30</a> <a href="./?page=2" rel="next" class="next_page">Next &raquo;</a>
++  </div>
++  <h2>Flickr.com</h2>
++  <div class='flickr_pagination'>
++    <span class="disabled prev_page">&laquo; Previous</span> <span class="current">1</span> <a href="./?page=2" rel="next">2</a> <a href="./?page=3">3</a> <a href="./?page=4">4</a> <a href="./?page=5">5</a> <a href="./?page=6">6</a> <a href="./?page=7">7</a> <a href="./?page=8">8</a> <a href="./?page=9">9</a> <span class="gap">&hellip;</span> <a href="./?page=29">29</a> <a href="./?page=30">30</a> <a href="./?page=2" rel="next" class="next_page">Next &raquo;</a>
++    <div class='page_info'>(118 photos)</div>
++  </div>
++</body>
+diff --git a/examples/pagination.css b/examples/pagination.css
+new file mode 100644
+index 0000000..e6f0ff6
+--- /dev/null
++++ b/examples/pagination.css
+@@ -0,0 +1,90 @@
++.digg_pagination {
++  background: white;
++  /* self-clearing method: */ }
++  .digg_pagination a, .digg_pagination span {
++    padding: .2em .5em;
++    display: block;
++    float: left;
++    margin-right: 1px; }
++  .digg_pagination span.disabled {
++    color: #999;
++    border: 1px solid #DDD; }
++  .digg_pagination span.current {
++    font-weight: bold;
++    background: #2E6AB1;
++    color: white;
++    border: 1px solid #2E6AB1; }
++  .digg_pagination a {
++    text-decoration: none;
++    color: #105CB6;
++    border: 1px solid #9AAFE5; }
++    .digg_pagination a:hover, .digg_pagination a:focus {
++      color: #003;
++      border-color: #003; }
++  .digg_pagination .page_info {
++    background: #2E6AB1;
++    color: white;
++    padding: .4em .6em;
++    width: 22em;
++    margin-bottom: .3em;
++    text-align: center; }
++    .digg_pagination .page_info b {
++      color: #003;
++      background: #6aa6ed;
++      padding: .1em .25em; }
++  .digg_pagination:after {
++    content: ".";
++    display: block;
++    height: 0;
++    clear: both;
++    visibility: hidden; }
++  * html .digg_pagination {
++    height: 1%; }
++  *:first-child+html .digg_pagination {
++    overflow: hidden; }
++
++.apple_pagination {
++  background: #F1F1F1;
++  border: 1px solid #E5E5E5;
++  text-align: center;
++  padding: 1em; }
++  .apple_pagination a, .apple_pagination span {
++    padding: .2em .3em; }
++  .apple_pagination span.disabled {
++    color: #AAA; }
++  .apple_pagination span.current {
++    font-weight: bold;
++    background: transparent url(apple-circle.gif) no-repeat 50% 50%; }
++  .apple_pagination a {
++    text-decoration: none;
++    color: black; }
++    .apple_pagination a:hover, .apple_pagination a:focus {
++      text-decoration: underline; }
++
++.flickr_pagination {
++  text-align: center;
++  padding: .3em; }
++  .flickr_pagination a, .flickr_pagination span {
++    padding: .2em .5em; }
++  .flickr_pagination span.disabled {
++    color: #AAA; }
++  .flickr_pagination span.current {
++    font-weight: bold;
++    color: #FF0084; }
++  .flickr_pagination a {
++    border: 1px solid #DDDDDD;
++    color: #0063DC;
++    text-decoration: none; }
++    .flickr_pagination a:hover, .flickr_pagination a:focus {
++      border-color: #003366;
++      background: #0063DC;
++      color: white; }
++  .flickr_pagination .page_info {
++    color: #aaa;
++    padding-top: .8em; }
++  .flickr_pagination .prev_page, .flickr_pagination .next_page {
++    border-width: 2px; }
++  .flickr_pagination .prev_page {
++    margin-right: 1em; }
++  .flickr_pagination .next_page {
++    margin-left: 1em; }
+diff --git a/examples/pagination.sass b/examples/pagination.sass
+new file mode 100644
+index 0000000..a623e29
+--- /dev/null
++++ b/examples/pagination.sass
+@@ -0,0 +1,91 @@
++.digg_pagination
++  :background white
++  a, span
++    :padding .2em .5em
++    :display block
++    :float left
++    :margin-right 1px
++  span.disabled
++    :color #999
++    :border 1px solid #DDD
++  span.current
++    :font-weight bold
++    :background #2E6AB1
++    :color white
++    :border 1px solid #2E6AB1
++  a
++    :text-decoration none
++    :color #105CB6
++    :border 1px solid #9AAFE5
++    &:hover, &:focus
++      :color #003
++      :border-color #003
++  .page_info
++    :background #2E6AB1
++    :color white
++    :padding .4em .6em
++    :width 22em
++    :margin-bottom .3em
++    :text-align center
++    b
++      :color #003
++      :background = #2E6AB1 + 60
++      :padding .1em .25em
++    
++  /* self-clearing method:
++  &:after
++    :content "."
++    :display block
++    :height 0
++    :clear both
++    :visibility hidden
++  * html &
++    :height 1%
++  *:first-child+html &
++    :overflow hidden
++
++.apple_pagination
++  :background #F1F1F1
++  :border 1px solid #E5E5E5
++  :text-align center
++  :padding 1em
++  a, span
++    :padding .2em .3em
++  span.disabled
++    :color #AAA
++  span.current
++    :font-weight bold
++    :background transparent url(apple-circle.gif) no-repeat 50% 50%
++  a
++    :text-decoration none
++    :color black
++    &:hover, &:focus
++      :text-decoration underline
++
++.flickr_pagination
++  :text-align center
++  :padding .3em
++  a, span
++    :padding .2em .5em
++  span.disabled
++    :color #AAA
++  span.current
++    :font-weight bold
++    :color #FF0084
++  a
++    :border 1px solid #DDDDDD
++    :color #0063DC
++    :text-decoration none
++    &:hover, &:focus
++      :border-color #003366
++      :background #0063DC
++      :color white
++  .page_info
++    :color #aaa
++    :padding-top .8em
++  .prev_page, .next_page
++    :border-width 2px
++  .prev_page
++    :margin-right 1em
++  .next_page
++    :margin-left 1em
+diff --git a/init.rb b/init.rb
+index 15f7499..6d93aab 100644
+--- a/init.rb
++++ b/init.rb
+@@ -1,2 +1 @@
+-require 'will_paginate'
+-ActionView::Base.send(:include, WillPaginate)
++require 'will_paginate'
+diff --git a/lib/will_paginate.rb b/lib/will_paginate.rb
+index 8139aab..c27c87b 100644
+--- a/lib/will_paginate.rb
++++ b/lib/will_paginate.rb
+@@ -1,43 +1,86 @@
+-module WillPaginate
+-  def will_paginate(total_count, per_page, page = @page)
+-    adjacents = 2
+-    prev_page = page - 1
+-    next_page = page + 1
+-    last_page = (total_count / per_page.to_f).ceil
+-    lpm1      = last_page - 1
+-
+-    returning '' do |pgn|
+-      if last_page > 1
+-        pgn << %{<div class="pagination">}
+-  
+-        # not enough pages to bother breaking
+-        if last_page < 7 + (adjacents * 2)
+-          1.upto(last_page) { |ctr| pgn << (ctr == page ? content_tag(:span, ctr, :class => 'current') : link_to(ctr, :page => ctr)) }
+-    
+-        # enough pages to hide some
+-        elsif last_page > 5 + (adjacents * 2) 
+-    
+-          # close to beginning, only hide later pages
+-          if page < 1 + (adjacents * 2)
+-            1.upto(3 + (adjacents * 2)) { |ctr| pgn << (ctr == page ? content_tag(:span, ctr, :class => 'current') : link_to(ctr, :page => ctr)) }
+-            pgn << "..." + link_to(lpm1, :page => lpm1) + link_to(last_page, :page => last_page)
+-  
+-          # in middle, hide some from both sides
+-          elsif last_page - (adjacents * 2) > page && page > (adjacents * 2)
+-            pgn << link_to('1', :page => 1) + link_to('2', :page => 2) + "..."
+-            (page - adjacents).upto(page + adjacents) { |ctr| pgn << (ctr == page ? content_tag(:span, ctr, :class => 'current') : link_to(ctr, :page => ctr)) }
+-            pgn << "..." + link_to(lpm1, :page => lpm1) + link_to(last_page, :page => last_page)
+-  
+-          # close to end, only hide early pages
+-          else
+-            pgn << link_to('1', :page => 1) + link_to('2', :page => 2) + "..."
+-            (last_page - (2 + (adjacents * 2))).upto(last_page) { |ctr| pgn << (ctr == page ? content_tag(:span, ctr, :class => 'current') : link_to(ctr, :page => ctr)) }
+-          end
+-        end
+-        pgn << (page > 1 ? link_to("&laquo; Previous", :page => prev_page) : content_tag(:span, "&laquo; Previous", :class => 'disabled'))
+-        pgn << (page < last_page ? link_to("Next &raquo;", :page => next_page) : content_tag(:span, "Next &raquo;", :class => 'disabled'))
+-        pgn << '</div>'
+-      end
+-    end
+-  end
+-end
++require 'active_support'
++
++# = You *will* paginate!
++#
++# First read about WillPaginate::Finder::ClassMethods, then see
++# WillPaginate::ViewHelpers. The magical array you're handling in-between is
++# WillPaginate::Collection.
++#
++# Happy paginating!
++module WillPaginate
++  class << self
++    # shortcut for <tt>enable_actionpack; enable_activerecord</tt>
++    def enable
++      enable_actionpack
++      enable_activerecord
++    end
++    
++    # mixes in WillPaginate::ViewHelpers in ActionView::Base
++    def enable_actionpack
++      return if ActionView::Base.instance_methods.include? 'will_paginate'
++      require 'will_paginate/view_helpers'
++      ActionView::Base.class_eval { include ViewHelpers }
++
++      if defined?(ActionController::Base) and ActionController::Base.respond_to? :rescue_responses
++        ActionController::Base.rescue_responses['WillPaginate::InvalidPage'] = :not_found
++      end
++    end
++    
++    # mixes in WillPaginate::Finder in ActiveRecord::Base and classes that deal
++    # with associations
++    def enable_activerecord
++      return if ActiveRecord::Base.respond_to? :paginate
++      require 'will_paginate/finder'
++      ActiveRecord::Base.class_eval { include Finder }
++
++      # support pagination on associations
++      a = ActiveRecord::Associations
++      returning([ a::AssociationCollection ]) { |classes|
++        # detect http://dev.rubyonrails.org/changeset/9230
++        unless a::HasManyThroughAssociation.superclass == a::HasManyAssociation
++          classes << a::HasManyThroughAssociation
++        end
++      }.each do |klass|
++        klass.class_eval do
++          include Finder::ClassMethods
++          alias_method_chain :method_missing, :paginate
++        end
++      end
++    end
++
++    # Enable named_scope, a feature of Rails 2.1, even if you have older Rails
++    # (tested on Rails 2.0.2 and 1.2.6).
++    #
++    # You can pass +false+ for +patch+ parameter to skip monkeypatching
++    # *associations*. Use this if you feel that <tt>named_scope</tt> broke
++    # has_many, has_many :through or has_and_belongs_to_many associations in
++    # your app. By passing +false+, you can still use <tt>named_scope</tt> in
++    # your models, but not through associations.
++    def enable_named_scope(patch = true)
++      return if defined? ActiveRecord::NamedScope
++      require 'will_paginate/named_scope'
++      require 'will_paginate/named_scope_patch' if patch
++
++      ActiveRecord::Base.class_eval do
++        include WillPaginate::NamedScope
++      end
++    end
++  end
++
++  module Deprecation #:nodoc:
++    extend ActiveSupport::Deprecation
++
++    def self.warn(message, callstack = caller)
++      message = 'WillPaginate: ' + message.strip.gsub(/\s+/, ' ')
++      behavior.call(message, callstack) if behavior && !silenced?
++    end
++
++    def self.silenced?
++      ActiveSupport::Deprecation.silenced?
++    end
++  end
++end
++
++if defined?(Rails) and defined?(ActiveRecord) and defined?(ActionController)
++  WillPaginate.enable
++end
+diff --git a/lib/will_paginate/array.rb b/lib/will_paginate/array.rb
+new file mode 100644
+index 0000000..e92e149
+--- /dev/null
++++ b/lib/will_paginate/array.rb
+@@ -0,0 +1,16 @@
++require 'will_paginate/collection'
++
++# http://www.desimcadam.com/archives/8
++Array.class_eval do
++  def paginate(options = {})
++    raise ArgumentError, "parameter hash expected (got #{options.inspect})" unless Hash === options
++    
++    WillPaginate::Collection.create(
++        options[:page] || 1,
++        options[:per_page] || 30,
++        options[:total_entries] || self.length
++    ) { |pager|
++      pager.replace self[pager.offset, pager.per_page].to_a
++    }
++  end
++end
+diff --git a/lib/will_paginate/collection.rb b/lib/will_paginate/collection.rb
+new file mode 100644
+index 0000000..bc2b73c
+--- /dev/null
++++ b/lib/will_paginate/collection.rb
+@@ -0,0 +1,145 @@
++module WillPaginate
++  # = Invalid page number error
++  # This is an ArgumentError raised in case a page was requested that is either
++  # zero or negative number. You should decide how do deal with such errors in
++  # the controller.
++  #
++  # If you're using Rails 2, then this error will automatically get handled like
++  # 404 Not Found. The hook is in "will_paginate.rb":
++  #
++  #   ActionController::Base.rescue_responses['WillPaginate::InvalidPage'] = :not_found
++  #
++  # If you don't like this, use your preffered method of rescuing exceptions in
++  # public from your controllers to handle this differently. The +rescue_from+
++  # method is a nice addition to Rails 2.
++  #
++  # This error is *not* raised when a page further than the last page is
++  # requested. Use <tt>WillPaginate::Collection#out_of_bounds?</tt> method to
++  # check for those cases and manually deal with them as you see fit.
++  class InvalidPage < ArgumentError
++    def initialize(page, page_num)
++      super "#{page.inspect} given as value, which translates to '#{page_num}' as page number"
++    end
++  end
++  
++  # = The key to pagination
++  # Arrays returned from paginating finds are, in fact, instances of this little
++  # class. You may think of WillPaginate::Collection as an ordinary array with
++  # some extra properties. Those properties are used by view helpers to generate
++  # correct page links.
++  #
++  # WillPaginate::Collection also assists in rolling out your own pagination
++  # solutions: see +create+.
++  # 
++  # If you are writing a library that provides a collection which you would like
++  # to conform to this API, you don't have to copy these methods over; simply
++  # make your plugin/gem dependant on the "will_paginate" gem:
++  #
++  #   gem 'will_paginate'
++  #   require 'will_paginate/collection'
++  #   
++  #   # now use WillPaginate::Collection directly or subclass it
++  class Collection < Array
++    attr_reader :current_page, :per_page, :total_entries, :total_pages
++
++    # Arguments to the constructor are the current page number, per-page limit
++    # and the total number of entries. The last argument is optional because it
++    # is best to do lazy counting; in other words, count *conditionally* after
++    # populating the collection using the +replace+ method.
++    def initialize(page, per_page, total = nil)
++      @current_page = page.to_i
++      raise InvalidPage.new(page, @current_page) if @current_page < 1
++      @per_page = per_page.to_i
++      raise ArgumentError, "`per_page` setting cannot be less than 1 (#{@per_page} given)" if @per_page < 1
++      
++      self.total_entries = total if total
++    end
++
++    # Just like +new+, but yields the object after instantiation and returns it
++    # afterwards. This is very useful for manual pagination:
++    #
++    #   @entries = WillPaginate::Collection.create(1, 10) do |pager|
++    #     result = Post.find(:all, :limit => pager.per_page, :offset => pager.offset)
++    #     # inject the result array into the paginated collection:
++    #     pager.replace(result)
++    #
++    #     unless pager.total_entries
++    #       # the pager didn't manage to guess the total count, do it manually
++    #       pager.total_entries = Post.count
++    #     end
++    #   end
++    #
++    # The possibilities with this are endless. For another example, here is how
++    # WillPaginate used to define pagination for Array instances:
++    #
++    #   Array.class_eval do
++    #     def paginate(page = 1, per_page = 15)
++    #       WillPaginate::Collection.create(page, per_page, size) do |pager|
++    #         pager.replace self[pager.offset, pager.per_page].to_a
++    #       end
++    #     end
++    #   end
++    #
++    # The Array#paginate API has since then changed, but this still serves as a
++    # fine example of WillPaginate::Collection usage.
++    def self.create(page, per_page, total = nil, &block)
++      pager = new(page, per_page, total)
++      yield pager
++      pager
++    end
++
++    # Helper method that is true when someone tries to fetch a page with a
++    # larger number than the last page. Can be used in combination with flashes
++    # and redirecting.
++    def out_of_bounds?
++      current_page > total_pages
++    end
++
++    # Current offset of the paginated collection. If we're on the first page,
++    # it is always 0. If we're on the 2nd page and there are 30 entries per page,
++    # the offset is 30. This property is useful if you want to render ordinals
++    # besides your records: simply start with offset + 1.
++    def offset
++      (current_page - 1) * per_page
++    end
++
++    # current_page - 1 or nil if there is no previous page
++    def previous_page
++      current_page > 1 ? (current_page - 1) : nil
++    end
++
++    # current_page + 1 or nil if there is no next page
++    def next_page
++      current_page < total_pages ? (current_page + 1) : nil
++    end
++
++    def total_entries=(number)
++      @total_entries = number.to_i
++      @total_pages   = (@total_entries / per_page.to_f).ceil
++    end
++
++    # This is a magic wrapper for the original Array#replace method. It serves
++    # for populating the paginated collection after initialization.
++    #
++    # Why magic? Because it tries to guess the total number of entries judging
++    # by the size of given array. If it is shorter than +per_page+ limit, then we
++    # know we're on the last page. This trick is very useful for avoiding
++    # unnecessary hits to the database to do the counting after we fetched the
++    # data for the current page.
++    #
++    # However, after using +replace+ you should always test the value of
++    # +total_entries+ and set it to a proper value if it's +nil+. See the example
++    # in +create+.
++    def replace(array)
++      result = super
++      
++      # The collection is shorter then page limit? Rejoice, because
++      # then we know that we are on the last page!
++      if total_entries.nil? and length < per_page and (current_page == 1 or length > 0)
++        self.total_entries = offset + length
++      end
++
++      result
++    end
++  end
++end
+diff --git a/lib/will_paginate/core_ext.rb b/lib/will_paginate/core_ext.rb
+new file mode 100644
+index 0000000..d1fe4ef
+--- /dev/null
++++ b/lib/will_paginate/core_ext.rb
+@@ -0,0 +1,32 @@
++require 'set'
++require 'will_paginate/array'
++
++unless Hash.instance_methods.include? 'except'
++  Hash.class_eval do
++    # Returns a new hash without the given keys.
++    def except(*keys)
++      rejected = Set.new(respond_to?(:convert_key) ? keys.map { |key| convert_key(key) } : keys)
++      reject { |key,| rejected.include?(key) }
++    end
++ 
++    # Replaces the hash without only the given keys.
++    def except!(*keys)
++      replace(except(*keys))
++    end
++  end
++end
++
++unless Hash.instance_methods.include? 'slice'
++  Hash.class_eval do
++    # Returns a new hash with only the given keys.
++    def slice(*keys)
++      allowed = Set.new(respond_to?(:convert_key) ? keys.map { |key| convert_key(key) } : keys)
++      reject { |key,| !allowed.include?(key) }
++    end
++
++    # Replaces the hash with only the given keys.
++    def slice!(*keys)
++      replace(slice(*keys))
++    end
++  end
++end
+diff --git a/lib/will_paginate/finder.rb b/lib/will_paginate/finder.rb
+new file mode 100644
+index 0000000..1ceecd5
+--- /dev/null
++++ b/lib/will_paginate/finder.rb
+@@ -0,0 +1,247 @@
++require 'will_paginate/core_ext'
++
++module WillPaginate
++  # A mixin for ActiveRecord::Base. Provides +per_page+ class method
++  # and hooks things up to provide paginating finders.
++  #
++  # Find out more in WillPaginate::Finder::ClassMethods
++  #
++  module Finder
++    def self.included(base)
++      base.extend ClassMethods
++      class << base
++        alias_method_chain :method_missing, :paginate
++        # alias_method_chain :find_every,     :paginate
++        define_method(:per_page) { 30 } unless respond_to?(:per_page)
++      end
++    end
++
++    # = Paginating finders for ActiveRecord models
++    # 
++    # WillPaginate adds +paginate+, +per_page+ and other methods to
++    # ActiveRecord::Base class methods and associations. It also hooks into
++    # +method_missing+ to intercept pagination calls to dynamic finders such as
++    # +paginate_by_user_id+ and translate them to ordinary finders
++    # (+find_all_by_user_id+ in this case).
++    # 
++    # In short, paginating finders are equivalent to ActiveRecord finders; the
++    # only difference is that we start with "paginate" instead of "find" and
++    # that <tt>:page</tt> is required parameter:
++    #
++    #   @posts = Post.paginate :all, :page => params[:page], :order => 'created_at DESC'
++    # 
++    # In paginating finders, "all" is implicit. There is no sense in paginating
++    # a single record, right? So, you can drop the <tt>:all</tt> argument:
++    # 
++    #   Post.paginate(...)              =>  Post.find :all
++    #   Post.paginate_all_by_something  =>  Post.find_all_by_something
++    #   Post.paginate_by_something      =>  Post.find_all_by_something
++    #
++    # == The importance of the <tt>:order</tt> parameter
++    #
++    # In ActiveRecord finders, <tt>:order</tt> parameter specifies columns for
++    # the <tt>ORDER BY</tt> clause in SQL. It is important to have it, since
++    # pagination only makes sense with ordered sets. Without the <tt>ORDER
++    # BY</tt> clause, databases aren't required to do consistent ordering when
++    # performing <tt>SELECT</tt> queries; this is especially true for
++    # PostgreSQL.
++    #
++    # Therefore, make sure you are doing ordering on a column that makes the
++    # most sense in the current context. Make that obvious to the user, also.
++    # For perfomance reasons you will also want to add an index to that column.
++    module ClassMethods
++      # This is the main paginating finder.
++      #
++      # == Special parameters for paginating finders
++      # * <tt>:page</tt> -- REQUIRED, but defaults to 1 if false or nil
++      # * <tt>:per_page</tt> -- defaults to <tt>CurrentModel.per_page</tt> (which is 30 if not overridden)
++      # * <tt>:total_entries</tt> -- use only if you manually count total entries
++      # * <tt>:count</tt> -- additional options that are passed on to +count+
++      # * <tt>:finder</tt> -- name of the ActiveRecord finder used (default: "find")
++      #
++      # All other options (+conditions+, +order+, ...) are forwarded to +find+
++      # and +count+ calls.
++      def paginate(*args, &block)
++        options = args.pop
++        page, per_page, total_entries = wp_parse_options(options)
++        finder = (options[:finder] || 'find').to_s
++
++        if finder == 'find'
++          # an array of IDs may have been given:
++          total_entries ||= (Array === args.first and args.first.size)
++          # :all is implicit
++          args.unshift(:all) if args.empty?
++        end
++
++        WillPaginate::Collection.create(page, per_page, total_entries) do |pager|
++          count_options = options.except :page, :per_page, :total_entries, :finder
++          find_options = count_options.except(:count).update(:offset => pager.offset, :limit => pager.per_page) 
++          
++          args << find_options
++          # @options_from_last_find = nil
++          pager.replace send(finder, *args, &block)
++          
++          # magic counting for user convenience:
++          pager.total_entries = wp_count(count_options, args, finder) unless pager.total_entries
++        end
++      end
++
++      # Iterates through all records by loading one page at a time. This is useful
++      # for migrations or any other use case where you don't want to load all the
++      # records in memory at once.
++      #
++      # It uses +paginate+ internally; therefore it accepts all of its options.
++      # You can specify a starting page with <tt>:page</tt> (default is 1). Default
++      # <tt>:order</tt> is <tt>"id"</tt>, override if necessary.
++      #
++      # See http://weblog.jamisbuck.org/2007/4/6/faking-cursors-in-activerecord where
++      # Jamis Buck describes this and also uses a more efficient way for MySQL.
++      def paginated_each(options = {}, &block)
++        options = { :order => 'id', :page => 1 }.merge options
++        options[:page] = options[:page].to_i
++        options[:total_entries] = 0 # skip the individual count queries
++        total = 0
++        
++        begin 
++          collection = paginate(options)
++          total += collection.each(&block).size
++          options[:page] += 1
++        end until collection.size < collection.per_page
++        
++        total
++      end
++      
++      # Wraps +find_by_sql+ by simply adding LIMIT and OFFSET to your SQL string
++      # based on the params otherwise used by paginating finds: +page+ and
++      # +per_page+.
++      #
++      # Example:
++      # 
++      #   @developers = Developer.paginate_by_sql ['select * from developers where salary > ?', 80000],
++      #                          :page => params[:page], :per_page => 3
++      #
++      # A query for counting rows will automatically be generated if you don't
++      # supply <tt>:total_entries</tt>. If you experience problems with this
++      # generated SQL, you might want to perform the count manually in your
++      # application.
++      # 
++      def paginate_by_sql(sql, options)
++        WillPaginate::Collection.create(*wp_parse_options(options)) do |pager|
++          query = sanitize_sql(sql)
++          original_query = query.dup
++          # add limit, offset
++          add_limit! query, :offset => pager.offset, :limit => pager.per_page
++          # perfom the find
++          pager.replace find_by_sql(query)
++          
++          unless pager.total_entries
++            count_query = original_query.sub /\bORDER\s+BY\s+[\w`,\s]+$/mi, ''
++            count_query = "SELECT COUNT(*) FROM (#{count_query})"
++            
++            unless ['oracle', 'oci'].include?(self.connection.adapter_name.downcase)
++              count_query << ' AS count_table'
++            end
++            # perform the count query
++            pager.total_entries = count_by_sql(count_query)
++          end
++        end
++      end
++
++      def respond_to?(method, include_priv = false) #:nodoc:
++        case method.to_sym
++        when :paginate, :paginate_by_sql
++          true
++        else
++          super(method.to_s.sub(/^paginate/, 'find'), include_priv)
++        end
++      end
++
++    protected
++      
++      def method_missing_with_paginate(method, *args, &block) #:nodoc:
++        # did somebody tried to paginate? if not, let them be
++        unless method.to_s.index('paginate') == 0
++          return method_missing_without_paginate(method, *args, &block) 
++        end
++        
++        # paginate finders are really just find_* with limit and offset
++        finder = method.to_s.sub('paginate', 'find')
++        finder.sub!('find', 'find_all') if finder.index('find_by_') == 0
++        
++        options = args.pop
++        raise ArgumentError, 'parameter hash expected' unless options.respond_to? :symbolize_keys
++        options = options.dup
++        options[:finder] = finder
++        args << options
++        
++        paginate(*args, &block)
++      end
++
++      # Does the not-so-trivial job of finding out the total number of entries
++      # in the database. It relies on the ActiveRecord +count+ method.
++      def wp_count(options, args, finder)
++        excludees = [:count, :order, :limit, :offset, :readonly]
++        unless options[:select] and options[:select] =~ /^\s*DISTINCT\b/i
++          excludees << :select # only exclude the select param if it doesn't begin with DISTINCT
++        end
++
++        # count expects (almost) the same options as find
++        count_options = options.except *excludees
++
++        # merge the hash found in :count
++        # this allows you to specify :select, :order, or anything else just for the count query
++        count_options.update options[:count] if options[:count]
++        
++        # we may be in a model or an association proxy
++        klass = (@owner and @reflection) ? @reflection.klass : self
++        
++        # forget about includes if they are irrelevant (Rails 2.1)
++        if count_options[:include] and
++            klass.private_methods.include?('references_eager_loaded_tables?') and
++            !klass.send(:references_eager_loaded_tables?, count_options)
++          count_options.delete :include
++        end
++
++        # we may have to scope ...
++        counter = Proc.new { count(count_options) }
++
++        count = if finder.index('find_') == 0 and klass.respond_to?(scoper = finder.sub('find', 'with'))
++                  # scope_out adds a 'with_finder' method which acts like with_scope, if it's present
++                  # then execute the count with the scoping provided by the with_finder
++                  send(scoper, &counter)
++                elsif match = /^find_(all_by|by)_([_a-zA-Z]\w*)$/.match(finder)
++                  # extract conditions from calls like "paginate_by_foo_and_bar"
++                  attribute_names = extract_attribute_names_from_match(match)
++                  conditions = construct_attributes_from_arguments(attribute_names, args)
++                  with_scope(:find => { :conditions => conditions }, &counter)
++                else
++                  counter.call
++                end
++
++        count.respond_to?(:length) ? count.length : count
++      end
++
++      def wp_parse_options(options) #:nodoc:
++        raise ArgumentError, 'parameter hash expected' unless options.respond_to? :symbolize_keys
++        options = options.symbolize_keys
++        raise ArgumentError, ':page parameter required' unless options.key? :page
++        
++        if options[:count] and options[:total_entries]
++          raise ArgumentError, ':count and :total_entries are mutually exclusive'
++        end
++
++        page     = options[:page] || 1
++        per_page = options[:per_page] || self.per_page
++        total    = options[:total_entries]
++        [page, per_page, total]
++      end
++
++    private
++
++      # def find_every_with_paginate(options)
++      #   @options_from_last_find = options
++      #   find_every_without_paginate(options)
++      # end
++    end
++  end
++end
+diff --git a/lib/will_paginate/named_scope.rb b/lib/will_paginate/named_scope.rb
+new file mode 100644
+index 0000000..8318b13
+--- /dev/null
++++ b/lib/will_paginate/named_scope.rb
+@@ -0,0 +1,132 @@
++## stolen from: http://dev.rubyonrails.org/browser/trunk/activerecord/lib/active_record/named_scope.rb?rev=9084
++
++module WillPaginate
++  # This is a feature backported from Rails 2.1 because of its usefullness not only with will_paginate,
++  # but in other aspects when managing complex conditions that you want to be reusable.
++  module NamedScope
++    # All subclasses of ActiveRecord::Base have two named_scopes:
++    # * <tt>all</tt>, which is similar to a <tt>find(:all)</tt> query, and
++    # * <tt>scoped</tt>, which allows for the creation of anonymous scopes, on the fly:
++    #
++    #   Shirt.scoped(:conditions => {:color => 'red'}).scoped(:include => :washing_instructions)
++    #
++    # These anonymous scopes tend to be useful when procedurally generating complex queries, where passing
++    # intermediate values (scopes) around as first-class objects is convenient.
++    def self.included(base)
++      base.class_eval do
++        extend ClassMethods
++        named_scope :all
++        named_scope :scoped, lambda { |scope| scope }
++      end
++    end
++
++    module ClassMethods
++      def scopes #:nodoc:
++        read_inheritable_attribute(:scopes) || write_inheritable_attribute(:scopes, {})
++      end
++
++      # Adds a class method for retrieving and querying objects. A scope represents a narrowing of a database query,
++      # such as <tt>:conditions => {:color => :red}, :select => 'shirts.*', :include => :washing_instructions</tt>.
++      #
++      #   class Shirt < ActiveRecord::Base
++      #     named_scope :red, :conditions => {:color => 'red'}
++      #     named_scope :dry_clean_only, :joins => :washing_instructions, :conditions => ['washing_instructions.dry_clean_only = ?', true]
++      #   end
++      # 
++      # The above calls to <tt>named_scope</tt> define class methods <tt>Shirt.red</tt> and <tt>Shirt.dry_clean_only</tt>. <tt>Shirt.red</tt>, 
++      # in effect, represents the query <tt>Shirt.find(:all, :conditions => {:color => 'red'})</tt>.
++      #
++      # Unlike Shirt.find(...), however, the object returned by <tt>Shirt.red</tt> is not an Array; it resembles the association object
++      # constructed by a <tt>has_many</tt> declaration. For instance, you can invoke <tt>Shirt.red.find(:first)</tt>, <tt>Shirt.red.count</tt>,
++      # <tt>Shirt.red.find(:all, :conditions => {:size => 'small'})</tt>. Also, just
++      # as with the association objects, name scopes acts like an Array, implementing Enumerable; <tt>Shirt.red.each(&block)</tt>,
++      # <tt>Shirt.red.first</tt>, and <tt>Shirt.red.inject(memo, &block)</tt> all behave as if Shirt.red really were an Array.
++      #
++      # These named scopes are composable. For instance, <tt>Shirt.red.dry_clean_only</tt> will produce all shirts that are both red and dry clean only.
++      # Nested finds and calculations also work with these compositions: <tt>Shirt.red.dry_clean_only.count</tt> returns the number of garments
++      # for which these criteria obtain. Similarly with <tt>Shirt.red.dry_clean_only.average(:thread_count)</tt>.
++      #
++      # All scopes are available as class methods on the ActiveRecord descendent upon which the scopes were defined. But they are also available to
++      # <tt>has_many</tt> associations. If,
++      #
++      #   class Person < ActiveRecord::Base
++      #     has_many :shirts
++      #   end
++      #
++      # then <tt>elton.shirts.red.dry_clean_only</tt> will return all of Elton's red, dry clean
++      # only shirts.
++      #
++      # Named scopes can also be procedural.
++      #
++      #   class Shirt < ActiveRecord::Base
++      #     named_scope :colored, lambda { |color|
++      #       { :conditions => { :color => color } }
++      #     }
++      #   end
++      #
++      # In this example, <tt>Shirt.colored('puce')</tt> finds all puce shirts.
++      #
++      # Named scopes can also have extensions, just as with <tt>has_many</tt> declarations:
++      #
++      #   class Shirt < ActiveRecord::Base
++      #     named_scope :red, :conditions => {:color => 'red'} do
++      #       def dom_id
++      #         'red_shirts'
++      #       end
++      #     end
++      #   end
++      #
++      def named_scope(name, options = {}, &block)
++        scopes[name] = lambda do |parent_scope, *args|
++          Scope.new(parent_scope, case options
++            when Hash
++              options
++            when Proc
++              options.call(*args)
++          end, &block)
++        end
++        (class << self; self end).instance_eval do
++          define_method name do |*args|
++            scopes[name].call(self, *args)
++          end
++        end
++      end
++    end
++    
++    class Scope #:nodoc:
++      attr_reader :proxy_scope, :proxy_options
++      [].methods.each { |m| delegate m, :to => :proxy_found unless m =~ /(^__|^nil\?|^send|class|extend|find|count|sum|average|maximum|minimum|paginate)/ }
++      delegate :scopes, :with_scope, :to => :proxy_scope
++
++      def initialize(proxy_scope, options, &block)
++        [options[:extend]].flatten.each { |extension| extend extension } if options[:extend]
++        extend Module.new(&block) if block_given?
++        @proxy_scope, @proxy_options = proxy_scope, options.except(:extend)
++      end
++
++      def reload
++        load_found; self
++      end
++
++      protected
++      def proxy_found
++        @found || load_found
++      end
++
++      private
++      def method_missing(method, *args, &block)
++        if scopes.include?(method)
++          scopes[method].call(self, *args)
++        else
++          with_scope :find => proxy_options do
++            proxy_scope.send(method, *args, &block)
++          end
++        end
++      end
++
++      def load_found
++        @found = find(:all)
++      end
++    end
++  end
++end
+diff --git a/lib/will_paginate/named_scope_patch.rb b/lib/will_paginate/named_scope_patch.rb
+new file mode 100644
+index 0000000..f4ed1c2
+--- /dev/null
++++ b/lib/will_paginate/named_scope_patch.rb
+@@ -0,0 +1,39 @@
++## based on http://dev.rubyonrails.org/changeset/9084
++
++ActiveRecord::Associations::AssociationProxy.class_eval do
++  protected
++  def with_scope(*args, &block)
++    @reflection.klass.send :with_scope, *args, &block
++  end
++end
++
++[ ActiveRecord::Associations::AssociationCollection,
++    ActiveRecord::Associations::HasManyThroughAssociation ].each do |klass|
++  klass.class_eval do
++    protected
++    alias :method_missing_without_scopes :method_missing_without_paginate
++    def method_missing_without_paginate(method, *args, &block)
++      if @reflection.klass.scopes.include?(method)
++        @reflection.klass.scopes[method].call(self, *args, &block)
++      else
++        method_missing_without_scopes(method, *args, &block)
++      end
++    end
++  end
++end
++
++# Rails 1.2.6
++ActiveRecord::Associations::HasAndBelongsToManyAssociation.class_eval do
++  protected
++  def method_missing(method, *args, &block)
++    if @target.respond_to?(method) || (!@reflection.klass.respond_to?(method) && Class.respond_to?(method))
++      super
++    elsif @reflection.klass.scopes.include?(method)
++      @reflection.klass.scopes[method].call(self, *args)
++    else
++      @reflection.klass.with_scope(:find => { :conditions => @finder_sql, :joins => @join_sql, :readonly => false }) do
++        @reflection.klass.send(method, *args, &block)
++      end
++    end
++  end
++end if ActiveRecord::Base.respond_to? :find_first
+diff --git a/lib/will_paginate/version.rb b/lib/will_paginate/version.rb
+new file mode 100644
+index 0000000..eaa26cd
+--- /dev/null
++++ b/lib/will_paginate/version.rb
+@@ -0,0 +1,9 @@
++module WillPaginate
++  module VERSION
++    MAJOR = 2
++    MINOR = 3
++    TINY  = 3
++
++    STRING = [MAJOR, MINOR, TINY].join('.')
++  end
++end
+diff --git a/lib/will_paginate/view_helpers.rb b/lib/will_paginate/view_helpers.rb
+new file mode 100644
+index 0000000..01dbd5e
+--- /dev/null
++++ b/lib/will_paginate/view_helpers.rb
+@@ -0,0 +1,373 @@
++require 'will_paginate/core_ext'
++
++module WillPaginate
++  # = Will Paginate view helpers
++  #
++  # Currently there is only one view helper: +will_paginate+. It renders the
++  # pagination links for the given collection. The helper itself is lightweight
++  # and serves only as a wrapper around link renderer instantiation; the
++  # renderer then does all the hard work of generating the HTML.
++  # 
++  # == Global options for helpers
++  #
++  # Options for pagination helpers are optional and get their default values from the
++  # WillPaginate::ViewHelpers.pagination_options hash. You can write to this hash to
++  # override default options on the global level:
++  #
++  #   WillPaginate::ViewHelpers.pagination_options[:prev_label] = 'Previous page'
++  #
++  # By putting this into your environment.rb you can easily translate link texts to previous
++  # and next pages, as well as override some other defaults to your liking.
++  module ViewHelpers
++    # default options that can be overridden on the global level
++    @@pagination_options = {
++      :class        => 'pagination',
++      :prev_label   => '&laquo; Previous',
++      :next_label   => 'Next &raquo;',
++      :inner_window => 4, # links around the current page
++      :outer_window => 1, # links around beginning and end
++      :separator    => ' ', # single space is friendly to spiders and non-graphic browsers
++      :param_name   => :page,
++      :params       => nil,
++      :renderer     => 'WillPaginate::LinkRenderer',
++      :page_links   => true,
++      :container    => true
++    }
++    mattr_reader :pagination_options
++
++    # Renders Digg/Flickr-style pagination for a WillPaginate::Collection
++    # object. Nil is returned if there is only one page in total; no point in
++    # rendering the pagination in that case...
++    # 
++    # ==== Options
++    # * <tt>:class</tt> -- CSS class name for the generated DIV (default: "pagination")
++    # * <tt>:prev_label</tt> -- default: "Të Previous"
++    # * <tt>:next_label</tt> -- default: "Next T¬"
++    # * <tt>:inner_window</tt> -- how many links are shown around the current page (default: 4)
++    # * <tt>:outer_window</tt> -- how many links are around the first and the last page (default: 1)
++    # * <tt>:separator</tt> -- string separator for page HTML elements (default: single space)
++    # * <tt>:param_name</tt> -- parameter name for page number in URLs (default: <tt>:page</tt>)
++    # * <tt>:params</tt> -- additional parameters when generating pagination links
++    #   (eg. <tt>:controller => "foo", :action => nil</tt>)
++    # * <tt>:renderer</tt> -- class name, class or instance of a link renderer (default:
++    #   <tt>WillPaginate::LinkRenderer</tt>)
++    # * <tt>:page_links</tt> -- when false, only previous/next links are rendered (default: true)
++    # * <tt>:container</tt> -- toggles rendering of the DIV container for pagination links, set to
++    #   false only when you are rendering your own pagination markup (default: true)
++    # * <tt>:id</tt> -- HTML ID for the container (default: nil). Pass +true+ to have the ID
++    #   automatically generated from the class name of objects in collection: for example, paginating
++    #   ArticleComment models would yield an ID of "article_comments_pagination".
++    #
++    # All options beside listed ones are passed as HTML attributes to the container
++    # element for pagination links (the DIV). For example:
++    # 
++    #   <%= will_paginate @posts, :id => 'wp_posts' %>
++    #
++    # ... will result in:
++    #
++    #   <div class="pagination" id="wp_posts"> ... </div>
++    #
++    # ==== Using the helper without arguments
++    # If the helper is called without passing in the collection object, it will
++    # try to read from the instance variable inferred by the controller name.
++    # For example, calling +will_paginate+ while the current controller is
++    # PostsController will result in trying to read from the <tt>@posts</tt>
++    # variable. Example:
++    #
++    #   <%= will_paginate :id => true %>
++    #
++    # ... will result in <tt>@post</tt> collection getting paginated:
++    #
++    #   <div class="pagination" id="posts_pagination"> ... </div>
++    #
++    def will_paginate(collection = nil, options = {})
++      options, collection = collection, nil if collection.is_a? Hash
++      unless collection or !controller
++        collection_name = "@#{controller.controller_name}"
++        collection = instance_variable_get(collection_name)
++        raise ArgumentError, "The #{collection_name} variable appears to be empty. Did you " +
++          "forget to pass the collection object for will_paginate?" unless collection
++      end
++      # early exit if there is nothing to render
++      return nil unless WillPaginate::ViewHelpers.total_pages_for_collection(collection) > 1
++      
++      options = options.symbolize_keys.reverse_merge WillPaginate::ViewHelpers.pagination_options
++      
++      # get the renderer instance
++      renderer = case options[:renderer]
++      when String
++        options[:renderer].to_s.constantize.new
++      when Class
++        options[:renderer].new
++      else
++        options[:renderer]
++      end
++      # render HTML for pagination
++      renderer.prepare collection, options, self
++      renderer.to_html
++    end
++    
++    # Wrapper for rendering pagination links at both top and bottom of a block
++    # of content.
++    # 
++    #   <% paginated_section @posts do %>
++    #     <ol id="posts">
++    #       <% for post in @posts %>
++    #         <li> ... </li>
++    #       <% end %>
++    #     </ol>
++    #   <% end %>
++    #
++    # will result in:
++    #
++    #   <div class="pagination"> ... </div>
++    #   <ol id="posts">
++    #     ...
++    #   </ol>
++    #   <div class="pagination"> ... </div>
++    #
++    # Arguments are passed to a <tt>will_paginate</tt> call, so the same options
++    # apply. Don't use the <tt>:id</tt> option; otherwise you'll finish with two
++    # blocks of pagination links sharing the same ID (which is invalid HTML).
++    def paginated_section(*args, &block)
++      pagination = will_paginate(*args).to_s
++      content = pagination + capture(&block) + pagination
++      concat content, block.binding
++    end
++
++    # Renders a helpful message with numbers of displayed vs. total entries.
++    # You can use this as a blueprint for your own, similar helpers.
++    #
++    #   <%= page_entries_info @posts %>
++    #   #-> Displaying posts 6 - 10 of 26 in total
++    #
++    # By default, the message will use the humanized class name of objects
++    # in collection: for instance, "project types" for ProjectType models.
++    # Override this to your liking with the <tt>:entry_name</tt> parameter:
++    #
++    #   <%= page_entries_info @posts, :entry_name => 'item' %>
++    #   #-> Displaying items 6 - 10 of 26 in total
++    def page_entries_info(collection, options = {})
++      entry_name = options[:entry_name] ||
++        (collection.empty?? 'entry' : collection.first.class.name.underscore.sub('_', ' '))
++      
++      if collection.total_pages < 2
++        case collection.size
++        when 0; "No #{entry_name.pluralize} found"
++        when 1; "Displaying <b>1</b> #{entry_name}"
++        else;   "Displaying <b>all #{collection.size}</b> #{entry_name.pluralize}"
++        end
++      else
++        %{Displaying #{entry_name.pluralize} <b>%d&nbsp;-&nbsp;%d</b> of <b>%d</b> in total} % [
++          collection.offset + 1,
++          collection.offset + collection.length,
++          collection.total_entries
++        ]
++      end
++    end
++
++    def self.total_pages_for_collection(collection) #:nodoc:
++      if collection.respond_to?('page_count') and !collection.respond_to?('total_pages')
++        WillPaginate::Deprecation.warn <<-MSG
++          You are using a paginated collection of class #{collection.class.name}
++          which conforms to the old API of WillPaginate::Collection by using
++          `page_count`, while the current method name is `total_pages`. Please
++          upgrade yours or 3rd-party code that provides the paginated collection.
++        MSG
++        class << collection
++          def total_pages; page_count; end
++        end
++      end
++      collection.total_pages
++    end
++  end
++
++  # This class does the heavy lifting of actually building the pagination
++  # links. It is used by +will_paginate+ helper internally.
++  class LinkRenderer
++
++    # The gap in page links is represented by:
++    #
++    #   <span class="gap">&hellip;</span>
++    attr_accessor :gap_marker
++    
++    def initialize
++      @gap_marker = '<span class="gap">&hellip;</span>'
++    end
++    
++    # * +collection+ is a WillPaginate::Collection instance or any other object
++    #   that conforms to that API
++    # * +options+ are forwarded from +will_paginate+ view helper
++    # * +template+ is the reference to the template being rendered
++    def prepare(collection, options, template)
++      @collection = collection
++      @options    = options
++      @template   = template
++
++      # reset values in case we're re-using this instance
++      @total_pages = @param_name = @url_string = nil
++    end
++
++    # Process it! This method returns the complete HTML string which contains
++    # pagination links. Feel free to subclass LinkRenderer and change this
++    # method as you see fit.
++    def to_html
++      links = @options[:page_links] ? windowed_links : []
++      # previous/next buttons
++      links.unshift page_link_or_span(@collection.previous_page, 'disabled prev_page', @options[:prev_label])
++      links.push    page_link_or_span(@collection.next_page,     'disabled next_page', @options[:next_label])
++      
++      html = links.join(@options[:separator])
++      @options[:container] ? @template.content_tag(:div, html, html_attributes) : html
++    end
++
++    # Returns the subset of +options+ this instance was initialized with that
++    # represent HTML attributes for the container element of pagination links.
++    def html_attributes
++      return @html_attributes if @html_attributes
++      @html_attributes = @options.except *(WillPaginate::ViewHelpers.pagination_options.keys - [:class])
++      # pagination of Post models will have the ID of "posts_pagination"
++      if @options[:container] and @options[:id] === true
++        @html_attributes[:id] = @collection.first.class.name.underscore.pluralize + '_pagination'
++      end
++      @html_attributes
++    end
++    
++  protected
++
++    # Collects link items for visible page numbers.
++    def windowed_links
++      prev = nil
++
++      visible_page_numbers.inject [] do |links, n|
++        # detect gaps:
++        links << gap_marker if prev and n > prev + 1
++        links << page_link_or_span(n, 'current')
++        prev = n
++        links
++      end
++    end
++
++    # Calculates visible page numbers using the <tt>:inner_window</tt> and
++    # <tt>:outer_window</tt> options.
++    def visible_page_numbers
++      inner_window, outer_window = @options[:inner_window].to_i, @options[:outer_window].to_i
++      window_from = current_page - inner_window
++      window_to = current_page + inner_window
++      
++      # adjust lower or upper limit if other is out of bounds
++      if window_to > total_pages
++        window_from -= window_to - total_pages
++        window_to = total_pages
++      end
++      if window_from < 1
++        window_to += 1 - window_from
++        window_from = 1
++        window_to = total_pages if window_to > total_pages
++      end
++      
++      visible   = (1..total_pages).to_a
++      left_gap  = (2 + outer_window)...window_from
++      right_gap = (window_to + 1)...(total_pages - outer_window)
++      visible  -= left_gap.to_a  if left_gap.last - left_gap.first > 1
++      visible  -= right_gap.to_a if right_gap.last - right_gap.first > 1
++
++      visible
++    end
++    
++    def page_link_or_span(page, span_class, text = nil)
++      text ||= page.to_s
++      
++      if page and page != current_page
++        classnames = span_class && span_class.index(' ') && span_class.split(' ', 2).last
++        page_link page, text, :rel => rel_value(page), :class => classnames
++      else
++        page_span page, text, :class => span_class
++      end
++    end
++
++    def page_link(page, text, attributes = {})
++      @template.link_to text, url_for(page), attributes
++    end
++
++    def page_span(page, text, attributes = {})
++      @template.content_tag :span, text, attributes
++    end
++
++    # Returns URL params for +page_link_or_span+, taking the current GET params
++    # and <tt>:params</tt> option into account.
++    def url_for(page)
++      page_one = page == 1
++      unless @url_string and !page_one
++        @url_params = {}
++        # page links should preserve GET parameters
++        stringified_merge @url_params, @template.params if @template.request.get?
++        stringified_merge @url_params, @options[:params] if @options[:params]
++        
++        if complex = param_name.index(/[^\w-]/)
++          page_param = (defined?(CGIMethods) ? CGIMethods : ActionController::AbstractRequest).
++            parse_query_parameters("#{param_name}=#{page}")
++          
++          stringified_merge @url_params, page_param
++        else
++          @url_params[param_name] = page_one ? 1 : 2
++        end
++
++        url = @template.url_for(@url_params)
++        return url if page_one
++        
++        if complex
++          @url_string = url.sub(%r!((?:\?|&amp;)#{CGI.escape param_name}=)#{page}!, '\1@')
++          return url
++        else
++          @url_string = url
++          @url_params[param_name] = 3
++          @template.url_for(@url_params).split(//).each_with_index do |char, i|
++            if char == '3' and url[i, 1] == '2'
++              @url_string[i] = '@'
++              break
++            end
++          end
++        end
++      end
++      # finally!
++      @url_string.sub '@', page.to_s
++    end
++
++  private
++
++    def rel_value(page)
++      case page
++      when @collection.previous_page; 'prev' + (page == 1 ? ' start' : '')
++      when @collection.next_page; 'next'
++      when 1; 'start'
++      end
++    end
++
++    def current_page
++      @collection.current_page
++    end
++
++    def total_pages
++      @total_pages ||= WillPaginate::ViewHelpers.total_pages_for_collection(@collection)
++    end
++
++    def param_name
++      @param_name ||= @options[:param_name].to_s
++    end
++
++    # Recursively merge into target hash by using stringified keys from the other one
++    def stringified_merge(target, other)
++      other.each do |key, value|
++        key = key.to_s # this line is what it's all about!
++        existing = target[key]
++
++        if value.is_a?(Hash) and (existing.is_a?(Hash) or existing.nil?)
++          stringified_merge(existing || (target[key] = {}), value)
++        else
++          target[key] = value
++        end
++      end
++    end
++  end
++end
+diff --git a/test/boot.rb b/test/boot.rb
+new file mode 100644
+index 0000000..4df47ec
+--- /dev/null
++++ b/test/boot.rb
+@@ -0,0 +1,21 @@
++plugin_root = File.join(File.dirname(__FILE__), '..')
++version = ENV['RAILS_VERSION']
++version = nil if version and version == ""
++
++# first look for a symlink to a copy of the framework
++if !version and framework_root = ["#{plugin_root}/rails", "#{plugin_root}/../../rails"].find { |p| File.directory? p }
++  puts "found framework root: #{framework_root}"
++  # this allows for a plugin to be tested outside of an app and without Rails gems
++  $:.unshift "#{framework_root}/activesupport/lib", "#{framework_root}/activerecord/lib", "#{framework_root}/actionpack/lib"
++else
++  # simply use installed gems if available
++  puts "using Rails#{version ? ' ' + version : nil} gems"
++  require 'rubygems'
++  
++  if version
++    gem 'rails', version
++  else
++    gem 'actionpack'
++    gem 'activerecord'
++  end
++end
+diff --git a/test/collection_test.rb b/test/collection_test.rb
+new file mode 100644
+index 0000000..de39206
+--- /dev/null
++++ b/test/collection_test.rb
+@@ -0,0 +1,140 @@
++require 'helper'
++require 'will_paginate/array'
++
++class ArrayPaginationTest < Test::Unit::TestCase
++  def test_simple
++    collection = ('a'..'e').to_a
++    
++    [{ :page => 1,  :per_page => 3,  :expected => %w( a b c ) },
++     { :page => 2,  :per_page => 3,  :expected => %w( d e ) },
++     { :page => 1,  :per_page => 5,  :expected => %w( a b c d e ) },
++     { :page => 3,  :per_page => 5,  :expected => [] },
++    ].
++    each do |conditions|
++      expected = conditions.delete :expected
++      assert_equal expected, collection.paginate(conditions)
++    end
++  end
++
++  def test_defaults
++    result = (1..50).to_a.paginate
++    assert_equal 1, result.current_page
++    assert_equal 30, result.size
++  end
++
++  def test_deprecated_api
++    assert_raise(ArgumentError) { [].paginate(2) }
++    assert_raise(ArgumentError) { [].paginate(2, 10) }
++  end
++
++  def test_total_entries_has_precedence
++    result = %w(a b c).paginate :total_entries => 5
++    assert_equal 5, result.total_entries
++  end
++
++  def test_argument_error_with_params_and_another_argument
++    assert_raise ArgumentError do
++      [].paginate({}, 5)
++    end
++  end
++
++  def test_paginated_collection
++    entries = %w(a b c)
++    collection = create(2, 3, 10) do |pager|
++      assert_equal entries, pager.replace(entries)
++    end
++
++    assert_equal entries, collection
++    assert_respond_to_all collection, %w(total_pages each offset size current_page per_page total_entries)
++    assert_kind_of Array, collection
++    assert_instance_of Array, collection.entries
++    assert_equal 3, collection.offset
++    assert_equal 4, collection.total_pages
++    assert !collection.out_of_bounds?
++  end
++
++  def test_previous_next_pages
++    collection = create(1, 1, 3)
++    assert_nil collection.previous_page
++    assert_equal 2, collection.next_page
++    
++    collection = create(2, 1, 3)
++    assert_equal 1, collection.previous_page
++    assert_equal 3, collection.next_page
++    
++    collection = create(3, 1, 3)
++    assert_equal 2, collection.previous_page
++    assert_nil collection.next_page
++  end
++
++  def test_out_of_bounds
++    entries = create(2, 3, 2){}
++    assert entries.out_of_bounds?
++    
++    entries = create(1, 3, 2){}
++    assert !entries.out_of_bounds?
++  end
++
++  def test_guessing_total_count
++    entries = create do |pager|
++      # collection is shorter than limit
++      pager.replace array
++    end
++    assert_equal 8, entries.total_entries
++    
++    entries = create(2, 5, 10) do |pager|
++      # collection is shorter than limit, but we have an explicit count
++      pager.replace array
++    end
++    assert_equal 10, entries.total_entries
++    
++    entries = create do |pager|
++      # collection is the same as limit; we can't guess
++      pager.replace array(5)
++    end
++    assert_equal nil, entries.total_entries
++    
++    entries = create do |pager|
++      # collection is empty; we can't guess
++      pager.replace array(0)
++    end
++    assert_equal nil, entries.total_entries
++    
++    entries = create(1) do |pager|
++      # collection is empty and we're on page 1,
++      # so the whole thing must be empty, too
++      pager.replace array(0)
++    end
++    assert_equal 0, entries.total_entries
++  end
++
++  def test_invalid_page
++    bad_inputs = [0, -1, nil, '', 'Schnitzel']
++
++    bad_inputs.each do |bad|
++      assert_raise(WillPaginate::InvalidPage) { create bad }
++    end
++  end
++
++  def test_invalid_per_page_setting
++    assert_raise(ArgumentError) { create(1, -1) }
++  end
++
++  def test_page_count_was_removed
++    assert_raise(NoMethodError) { create.page_count }
++    # It's `total_pages` now.
++  end
++
++  private
++    def create(page = 2, limit = 5, total = nil, &block)
++      if block_given?
++        WillPaginate::Collection.create(page, limit, total, &block)
++      else
++        WillPaginate::Collection.new(page, limit, total)
++      end
++    end
++
++    def array(size = 3)
++      Array.new(size)
++    end
++end
+diff --git a/test/console b/test/console
+new file mode 100755
+index 0000000..ca74c60
+--- /dev/null
++++ b/test/console
+@@ -0,0 +1,8 @@
++#!/usr/bin/env ruby
++irb = RUBY_PLATFORM =~ /(:?mswin|mingw)/ ? 'irb.bat' : 'irb'
++libs = []
++
++libs << 'irb/completion'
++libs << File.join('lib', 'load_fixtures')
++
++exec "#{irb} -Ilib:test#{libs.map{ |l| " -r #{l}" }.join} --simple-prompt"
+diff --git a/test/database.yml b/test/database.yml
+new file mode 100644
+index 0000000..7ef1e73
+--- /dev/null
++++ b/test/database.yml
+@@ -0,0 +1,22 @@
++sqlite3:
++  database: ":memory:"
++  adapter: sqlite3
++  timeout: 500
++
++sqlite2:
++  database: ":memory:"
++  adapter: sqlite2
++
++mysql:
++  adapter: mysql
++  username: rails
++  password: mislav
++  encoding: utf8
++  database: will_paginate_unittest
++
++postgres:
++  adapter: postgresql
++  username: mislav
++  password: mislav
++  database: will_paginate_unittest
++  min_messages: warning
+diff --git a/test/finder_test.rb b/test/finder_test.rb
+new file mode 100644
+index 0000000..23fe269
+--- /dev/null
++++ b/test/finder_test.rb
+@@ -0,0 +1,434 @@
++require 'helper'
++require 'lib/activerecord_test_case'
++
++require 'will_paginate'
++WillPaginate.enable_activerecord
++WillPaginate.enable_named_scope
++
++class FinderTest < ActiveRecordTestCase
++  fixtures :topics, :replies, :users, :projects, :developers_projects
++
++  def test_new_methods_presence
++    assert_respond_to_all Topic, %w(per_page paginate paginate_by_sql)
++  end
++  
++  def test_simple_paginate
++    assert_queries(1) do
++      entries = Topic.paginate :page => nil
++      assert_equal 1, entries.current_page
++      assert_equal 1, entries.total_pages
++      assert_equal 4, entries.size
++    end
++    
++    assert_queries(2) do
++      entries = Topic.paginate :page => 2
++      assert_equal 1, entries.total_pages
++      assert entries.empty?
++    end
++  end
++
++  def test_parameter_api
++    # :page parameter in options is required!
++    assert_raise(ArgumentError){ Topic.paginate }
++    assert_raise(ArgumentError){ Topic.paginate({}) }
++    
++    # explicit :all should not break anything
++    assert_equal Topic.paginate(:page => nil), Topic.paginate(:all, :page => 1)
++
++    # :count could be nil and we should still not cry
++    assert_nothing_raised { Topic.paginate :page => 1, :count => nil }
++  end
++  
++  def test_paginate_with_per_page
++    entries = Topic.paginate :page => 1, :per_page => 1
++    assert_equal 1, entries.size
++    assert_equal 4, entries.total_pages
++
++    # Developer class has explicit per_page at 10
++    entries = Developer.paginate :page => 1
++    assert_equal 10, entries.size
++    assert_equal 2, entries.total_pages
++
++    entries = Developer.paginate :page => 1, :per_page => 5
++    assert_equal 11, entries.total_entries
++    assert_equal 5, entries.size
++    assert_equal 3, entries.total_pages
++  end
++  
++  def test_paginate_with_order
++    entries = Topic.paginate :page => 1, :order => 'created_at desc'
++    expected = [topics(:futurama), topics(:harvey_birdman), topics(:rails), topics(:ar)].reverse
++    assert_equal expected, entries.to_a
++    assert_equal 1, entries.total_pages
++  end
++  
++  def test_paginate_with_conditions
++    entries = Topic.paginate :page => 1, :conditions => ["created_at > ?", 30.minutes.ago]
++    expected = [topics(:rails), topics(:ar)]
++    assert_equal expected, entries.to_a
++    assert_equal 1, entries.total_pages
++  end
++
++  def test_paginate_with_include_and_conditions
++    entries = Topic.paginate \
++      :page     => 1, 
++      :include  => :replies,  
++      :conditions => "replies.content LIKE 'Bird%' ", 
++      :per_page => 10
++
++    expected = Topic.find :all, 
++      :include => 'replies', 
++      :conditions => "replies.content LIKE 'Bird%' ", 
++      :limit   => 10
++
++    assert_equal expected, entries.to_a
++    assert_equal 1, entries.total_entries
++  end
++  
++  def test_paginate_with_include_and_order
++    entries = nil
++    assert_queries(2) do
++      entries = Topic.paginate \
++        :page     => 1, 
++        :include  => :replies,  
++        :order    => 'replies.created_at asc, topics.created_at asc', 
++        :per_page => 10
++    end
++
++    expected = Topic.find :all, 
++      :include => 'replies', 
++      :order   => 'replies.created_at asc, topics.created_at asc', 
++      :limit   => 10
++
++    assert_equal expected, entries.to_a
++    assert_equal 4, entries.total_entries
++  end
++
++  def test_paginate_associations_with_include
++    entries, project = nil, projects(:active_record)
++
++    assert_nothing_raised "THIS IS A BUG in Rails 1.2.3 that was fixed in [7326]. " +
++        "Please upgrade to a newer version of Rails." do
++      entries = project.topics.paginate \
++        :page     => 1, 
++        :include  => :replies,  
++        :conditions => "replies.content LIKE 'Nice%' ", 
++        :per_page => 10
++    end
++
++    expected = Topic.find :all, 
++      :include => 'replies', 
++      :conditions => "project_id = #{project.id} AND replies.content LIKE 'Nice%' ", 
++      :limit   => 10
++
++    assert_equal expected, entries.to_a
++  end
++
++  def test_paginate_associations
++    dhh = users :david
++    expected_name_ordered = [projects(:action_controller), projects(:active_record)]
++    expected_id_ordered   = [projects(:active_record), projects(:action_controller)]
++
++    assert_queries(2) do
++      # with association-specified order
++      entries = dhh.projects.paginate(:page => 1)
++      assert_equal expected_name_ordered, entries
++      assert_equal 2, entries.total_entries
++    end
++
++    # with explicit order
++    entries = dhh.projects.paginate(:page => 1, :order => 'projects.id')
++    assert_equal expected_id_ordered, entries
++    assert_equal 2, entries.total_entries
++
++    assert_nothing_raised { dhh.projects.find(:all, :order => 'projects.id', :limit => 4) }
++    entries = dhh.projects.paginate(:page => 1, :order => 'projects.id', :per_page => 4)
++    assert_equal expected_id_ordered, entries
++
++    # has_many with implicit order
++    topic = Topic.find(1)
++    expected = [replies(:spam), replies(:witty_retort)]
++    assert_equal expected.map(&:id).sort, topic.replies.paginate(:page => 1).map(&:id).sort
++    assert_equal expected.reverse, topic.replies.paginate(:page => 1, :order => 'replies.id ASC')
++  end
++
++  def test_paginate_association_extension
++    project = Project.find(:first)
++    
++    assert_queries(2) do
++      entries = project.replies.paginate_recent :page => 1
++      assert_equal [replies(:brave)], entries
++    end
++  end
++  
++  def test_paginate_with_joins
++    entries = nil
++    
++    assert_queries(1) do
++      entries = Developer.paginate :page => 1,
++                          :joins => 'LEFT JOIN developers_projects ON users.id = developers_projects.developer_id',
++                          :conditions => 'project_id = 1'        
++      assert_equal 2, entries.size
++      developer_names = entries.map &:name
++      assert developer_names.include?('David')
++      assert developer_names.include?('Jamis')
++    end
++
++    assert_queries(1) do
++      expected = entries.to_a
++      entries = Developer.paginate :page => 1,
++                          :joins => 'LEFT JOIN developers_projects ON users.id = developers_projects.developer_id',
++                          :conditions => 'project_id = 1', :count => { :select => "users.id" }
++      assert_equal expected, entries.to_a
++      assert_equal 2, entries.total_entries
++    end
++  end
++
++  def test_paginate_with_group
++    entries = nil
++    assert_queries(1) do
++      entries = Developer.paginate :page => 1, :per_page => 10,
++                                   :group => 'salary', :select => 'salary', :order => 'salary'
++    end
++    
++    expected = [ users(:david), users(:jamis), users(:dev_10), users(:poor_jamis) ].map(&:salary).sort
++    assert_equal expected, entries.map(&:salary)
++  end
++
++  def test_paginate_with_dynamic_finder
++    expected = [replies(:witty_retort), replies(:spam)]
++    assert_equal expected, Reply.paginate_by_topic_id(1, :page => 1)
++
++    entries = Developer.paginate :conditions => { :salary => 100000 }, :page => 1, :per_page => 5
++    assert_equal 8, entries.total_entries
++    assert_equal entries, Developer.paginate_by_salary(100000, :page => 1, :per_page => 5)
++
++    # dynamic finder + conditions
++    entries = Developer.paginate_by_salary(100000, :page => 1,
++                                           :conditions => ['id > ?', 6])
++    assert_equal 4, entries.total_entries
++    assert_equal (7..10).to_a, entries.map(&:id)
++
++    assert_raises NoMethodError do
++      Developer.paginate_by_inexistent_attribute 100000, :page => 1
++    end
++  end
++
++  def test_scoped_paginate
++    entries = Developer.with_poor_ones { Developer.paginate :page => 1 }
++
++    assert_equal 2, entries.size
++    assert_equal 2, entries.total_entries
++  end
++
++  ## named_scope ##
++  
++  def test_paginate_in_named_scope
++    entries = Developer.poor.paginate :page => 1, :per_page => 1
++
++    assert_equal 1, entries.size
++    assert_equal 2, entries.total_entries
++  end
++  
++  def test_paginate_in_named_scope_on_habtm_association
++    project = projects(:active_record)
++    assert_queries(2) do
++      entries = project.developers.poor.paginate :page => 1, :per_page => 1
++
++      assert_equal 1, entries.size, 'one developer should be found'
++      assert_equal 1, entries.total_entries, 'only one developer should be found'
++    end
++  end
++
++  def test_paginate_in_named_scope_on_hmt_association
++    project = projects(:active_record)
++    expected = [replies(:brave)]
++    
++    assert_queries(2) do
++      entries = project.replies.recent.paginate :page => 1, :per_page => 1
++      assert_equal expected, entries
++      assert_equal 1, entries.total_entries, 'only one reply should be found'
++    end
++  end
++
++  def test_paginate_in_named_scope_on_has_many_association
++    project = projects(:active_record)
++    expected = [topics(:ar)]
++    
++    assert_queries(2) do
++      entries = project.topics.mentions_activerecord.paginate :page => 1, :per_page => 1
++      assert_equal expected, entries
++      assert_equal 1, entries.total_entries, 'only one topic should be found'
++    end
++  end
++
++  ## misc ##
++
++  def test_count_and_total_entries_options_are_mutually_exclusive
++    e = assert_raise ArgumentError do
++      Developer.paginate :page => 1, :count => {}, :total_entries => 1
++    end
++    assert_match /exclusive/, e.to_s
++  end
++  
++  def test_readonly
++    assert_nothing_raised { Developer.paginate :readonly => true, :page => 1 }
++  end
++
++  # this functionality is temporarily removed
++  def xtest_pagination_defines_method
++    pager = "paginate_by_created_at"
++    assert !User.methods.include?(pager), "User methods should not include `#{pager}` method"
++    # paginate!
++    assert 0, User.send(pager, nil, :page => 1).total_entries
++    # the paging finder should now be defined
++    assert User.methods.include?(pager), "`#{pager}` method should be defined on User"
++  end
++
++  # Is this Rails 2.0? Find out by testing find_all which was removed in [6998]
++  unless ActiveRecord::Base.respond_to? :find_all
++    def test_paginate_array_of_ids
++      # AR finders also accept arrays of IDs
++      # (this was broken in Rails before [6912])
++      assert_queries(1) do
++        entries = Developer.paginate((1..8).to_a, :per_page => 3, :page => 2, :order => 'id')
++        assert_equal (4..6).to_a, entries.map(&:id)
++        assert_equal 8, entries.total_entries
++      end
++    end
++  end
++
++  uses_mocha 'internals' do
++    def test_implicit_all_with_dynamic_finders
++      Topic.expects(:find_all_by_foo).returns([])
++      Topic.expects(:count).returns(0)
++      Topic.paginate_by_foo :page => 2
++    end
++    
++    def test_guessing_the_total_count
++      Topic.expects(:find).returns(Array.new(2))
++      Topic.expects(:count).never
++      
++      entries = Topic.paginate :page => 2, :per_page => 4
++      assert_equal 6, entries.total_entries
++    end
++    
++    def test_guessing_that_there_are_no_records
++      Topic.expects(:find).returns([])
++      Topic.expects(:count).never
++      
++      entries = Topic.paginate :page => 1, :per_page => 4
++      assert_equal 0, entries.total_entries
++    end
++    
++    def test_extra_parameters_stay_untouched
++      Topic.expects(:find).with(:all, {:foo => 'bar', :limit => 4, :offset => 0 }).returns(Array.new(5))
++      Topic.expects(:count).with({:foo => 'bar'}).returns(1)
++
++      Topic.paginate :foo => 'bar', :page => 1, :per_page => 4
++    end
++
++    def test_count_skips_select
++      Developer.stubs(:find).returns([])
++      Developer.expects(:count).with({}).returns(0)
++      Developer.paginate :select => 'salary', :page => 2
++    end
++
++    def test_count_select_when_distinct
++      Developer.stubs(:find).returns([])
++      Developer.expects(:count).with(:select => 'DISTINCT salary').returns(0)
++      Developer.paginate :select => 'DISTINCT salary', :page => 2
++    end
++
++    def test_should_use_scoped_finders_if_present
++      # scope-out compatibility
++      Topic.expects(:find_best).returns(Array.new(5))
++      Topic.expects(:with_best).returns(1)
++      
++      Topic.paginate_best :page => 1, :per_page => 4
++    end
++
++    def test_paginate_by_sql
++      assert_respond_to Developer, :paginate_by_sql
++      Developer.expects(:find_by_sql).with(regexp_matches(/sql LIMIT 3(,| OFFSET) 3/)).returns([])
++      Developer.expects(:count_by_sql).with('SELECT COUNT(*) FROM (sql) AS count_table').returns(0)
++      
++      entries = Developer.paginate_by_sql 'sql', :page => 2, :per_page => 3
++    end
++
++    def test_paginate_by_sql_respects_total_entries_setting
++      Developer.expects(:find_by_sql).returns([])
++      Developer.expects(:count_by_sql).never
++      
++      entries = Developer.paginate_by_sql 'sql', :page => 1, :total_entries => 999
++      assert_equal 999, entries.total_entries
++    end
++
++    def test_paginate_by_sql_strips_order_by_when_counting
++      Developer.expects(:find_by_sql).returns([])
++      Developer.expects(:count_by_sql).with("SELECT COUNT(*) FROM (sql\n ) AS count_table").returns(0)
++      
++      Developer.paginate_by_sql "sql\n ORDER\nby foo, bar, `baz` ASC", :page => 2
++    end
++
++    # TODO: counts are still wrong
++    def test_ability_to_use_with_custom_finders
++      # acts_as_taggable defines find_tagged_with(tag, options)
++      Topic.expects(:find_tagged_with).with('will_paginate', :offset => 5, :limit => 5).returns([])
++      Topic.expects(:count).with({}).returns(0)
++      
++      Topic.paginate_tagged_with 'will_paginate', :page => 2, :per_page => 5
++    end
++    
++    def test_array_argument_doesnt_eliminate_count
++      ids = (1..8).to_a
++      Developer.expects(:find_all_by_id).returns([])
++      Developer.expects(:count).returns(0)
++      
++      Developer.paginate_by_id(ids, :per_page => 3, :page => 2, :order => 'id')
++    end
++
++    def test_paginating_finder_doesnt_mangle_options
++      Developer.expects(:find).returns([])
++      options = { :page => 1 }
++      options.expects(:delete).never
++      options_before = options.dup
++      
++      Developer.paginate(options)
++      assert_equal options, options_before
++    end
++
++    def test_paginated_each
++      collection = stub('collection', :size => 5, :empty? => false, :per_page => 5)
++      collection.expects(:each).times(2).returns(collection)
++      last_collection = stub('collection', :size => 4, :empty? => false, :per_page => 5)
++      last_collection.expects(:each).returns(last_collection)
++      
++      params = { :order => 'id', :total_entries => 0 }
++      
++      Developer.expects(:paginate).with(params.merge(:page => 2)).returns(collection)
++      Developer.expects(:paginate).with(params.merge(:page => 3)).returns(collection)
++      Developer.expects(:paginate).with(params.merge(:page => 4)).returns(last_collection)
++      
++      assert_equal 14, Developer.paginated_each(:page => '2') { }
++    end
++
++    # detect ActiveRecord 2.1
++    if ActiveRecord::Base.private_methods.include?('references_eager_loaded_tables?')
++      def test_removes_irrelevant_includes_in_count
++        Developer.expects(:find).returns([1])
++        Developer.expects(:count).with({}).returns(0)
++
++        Developer.paginate :page => 1, :per_page => 1, :include => :projects
++      end
++
++      def test_doesnt_remove_referenced_includes_in_count
++        Developer.expects(:find).returns([1])
++        Developer.expects(:count).with({ :include => :projects, :conditions => 'projects.id > 2' }).returns(0)
++
++        Developer.paginate :page => 1, :per_page => 1,
++          :include => :projects, :conditions => 'projects.id > 2'
++      end
++    end
++  end
++end
+diff --git a/test/fixtures/admin.rb b/test/fixtures/admin.rb
+new file mode 100644
+index 0000000..1d5e7f3
+--- /dev/null
++++ b/test/fixtures/admin.rb
+@@ -0,0 +1,3 @@
++class Admin < User
++  has_many :companies, :finder_sql => 'SELECT * FROM companies'
++end
+diff --git a/test/fixtures/developer.rb b/test/fixtures/developer.rb
+new file mode 100644
+index 0000000..6e702e7
+--- /dev/null
++++ b/test/fixtures/developer.rb
+@@ -0,0 +1,13 @@
++class Developer < User
++  has_and_belongs_to_many :projects, :include => :topics, :order => 'projects.name'
++
++  def self.with_poor_ones(&block)
++    with_scope :find => { :conditions => ['salary <= ?', 80000], :order => 'salary' } do
++      yield
++    end
++  end
++
++  named_scope :poor, :conditions => ['salary <= ?', 80000], :order => 'salary'
++
++  def self.per_page() 10 end
++end
+diff --git a/test/fixtures/developers_projects.yml b/test/fixtures/developers_projects.yml
+new file mode 100644
+index 0000000..cee359c
+--- /dev/null
++++ b/test/fixtures/developers_projects.yml
+@@ -0,0 +1,13 @@
++david_action_controller:
++  developer_id: 1
++  project_id: 2
++  joined_on: 2004-10-10
++
++david_active_record:
++  developer_id: 1
++  project_id: 1
++  joined_on: 2004-10-10
++
++jamis_active_record:
++  developer_id: 2
++  project_id: 1
+\ No newline at end of file
+diff --git a/test/fixtures/project.rb b/test/fixtures/project.rb
+new file mode 100644
+index 0000000..0f85ef5
+--- /dev/null
++++ b/test/fixtures/project.rb
+@@ -0,0 +1,15 @@
++class Project < ActiveRecord::Base
++  has_and_belongs_to_many :developers, :uniq => true
++  
++  has_many :topics
++    # :finder_sql  => 'SELECT * FROM topics WHERE (topics.project_id = #{id})',
++    # :counter_sql => 'SELECT COUNT(*) FROM topics WHERE (topics.project_id = #{id})'
++  
++  has_many :replies, :through => :topics do
++    def find_recent(params = {})
++      with_scope :find => { :conditions => ['replies.created_at > ?', 15.minutes.ago] } do
++        find :all, params
++      end
++    end
++  end
++end
+diff --git a/test/fixtures/projects.yml b/test/fixtures/projects.yml
+new file mode 100644
+index 0000000..44e2508
+--- /dev/null
++++ b/test/fixtures/projects.yml
+@@ -0,0 +1,6 @@
++active_record:
++  id: 1
++  name: Active Record
++action_controller:
++  id: 2
++  name: Active Controller
+diff --git a/test/fixtures/replies.yml b/test/fixtures/replies.yml
+new file mode 100644
+index 0000000..9a83c00
+--- /dev/null
++++ b/test/fixtures/replies.yml
+@@ -0,0 +1,29 @@
++witty_retort:
++  id: 1
++  topic_id: 1
++  content: Birdman is better!
++  created_at: <%= 6.hours.ago.to_s(:db) %>
++  
++another:
++  id: 2
++  topic_id: 2
++  content: Nuh uh!
++  created_at: <%= 1.hour.ago.to_s(:db) %>
++  
++spam:
++  id: 3
++  topic_id: 1
++  content: Nice site!
++  created_at: <%= 1.hour.ago.to_s(:db) %>
++
++decisive:
++  id: 4
++  topic_id: 4
++  content: "I'm getting to the bottom of this"
++  created_at: <%= 30.minutes.ago.to_s(:db) %>
++
++brave:
++  id: 5
++  topic_id: 4
++  content: "AR doesn't scare me a bit"
++  created_at: <%= 10.minutes.ago.to_s(:db) %>
+diff --git a/test/fixtures/reply.rb b/test/fixtures/reply.rb
+new file mode 100644
+index 0000000..2d58b75
+--- /dev/null
++++ b/test/fixtures/reply.rb
+@@ -0,0 +1,7 @@
++class Reply < ActiveRecord::Base
++  belongs_to :topic, :include => [:replies]
++
++  named_scope :recent, :conditions => ['replies.created_at > ?', 15.minutes.ago]
++  
++  validates_presence_of :content
++end
+diff --git a/test/fixtures/schema.rb b/test/fixtures/schema.rb
+new file mode 100644
+index 0000000..8831aad
+--- /dev/null
++++ b/test/fixtures/schema.rb
+@@ -0,0 +1,38 @@
++ActiveRecord::Schema.define do
++
++  create_table "users", :force => true do |t|
++    t.column "name",       :text
++    t.column "salary",     :integer,  :default => 70000
++    t.column "created_at", :datetime
++    t.column "updated_at", :datetime
++    t.column "type",       :text
++  end
++
++  create_table "projects", :force => true do |t|
++    t.column "name", :text
++  end
++
++  create_table "developers_projects", :id => false, :force => true do |t|
++    t.column "developer_id", :integer, :null => false
++    t.column "project_id",   :integer, :null => false
++    t.column "joined_on",    :date
++    t.column "access_level", :integer, :default => 1
++  end
++
++  create_table "topics", :force => true do |t|
++    t.column "project_id", :integer
++    t.column "title",      :string
++    t.column "subtitle",   :string
++    t.column "content",    :text
++    t.column "created_at", :datetime
++    t.column "updated_at", :datetime
++  end
++
++  create_table "replies", :force => true do |t|
++    t.column "content",    :text
++    t.column "created_at", :datetime
++    t.column "updated_at", :datetime
++    t.column "topic_id",   :integer
++  end
++
++end
+diff --git a/test/fixtures/topic.rb b/test/fixtures/topic.rb
+new file mode 100644
+index 0000000..3fddd17
+--- /dev/null
++++ b/test/fixtures/topic.rb
+@@ -0,0 +1,6 @@
++class Topic < ActiveRecord::Base
++  has_many :replies, :dependent => :destroy, :order => 'replies.created_at DESC'
++  belongs_to :project
++
++  named_scope :mentions_activerecord, :conditions => ['topics.title LIKE ?', '%ActiveRecord%']
++end
+diff --git a/test/fixtures/topics.yml b/test/fixtures/topics.yml
+new file mode 100644
+index 0000000..0a26904
+--- /dev/null
++++ b/test/fixtures/topics.yml
+@@ -0,0 +1,30 @@
++futurama:
++  id: 1
++  title: Isnt futurama awesome?
++  subtitle: It really is, isnt it.
++  content: I like futurama
++  created_at: <%= 1.day.ago.to_s(:db) %>
++  updated_at:
++  
++harvey_birdman:
++  id: 2
++  title: Harvey Birdman is the king of all men
++  subtitle: yup
++  content: He really is
++  created_at: <%= 2.hours.ago.to_s(:db) %>
++  updated_at:
++
++rails:
++  id: 3
++  project_id: 1
++  title: Rails is nice
++  subtitle: It makes me happy
++  content: except when I have to hack internals to fix pagination. even then really.
++  created_at: <%= 20.minutes.ago.to_s(:db) %>
++
++ar:
++  id: 4
++  project_id: 1
++  title: ActiveRecord sometimes freaks me out
++  content: "I mean, what's the deal with eager loading?"
++  created_at: <%= 15.minutes.ago.to_s(:db) %>
+diff --git a/test/fixtures/user.rb b/test/fixtures/user.rb
+new file mode 100644
+index 0000000..4a57cf0
+--- /dev/null
++++ b/test/fixtures/user.rb
+@@ -0,0 +1,2 @@
++class User < ActiveRecord::Base
++end
+diff --git a/test/fixtures/users.yml b/test/fixtures/users.yml
+new file mode 100644
+index 0000000..ed2c03a
+--- /dev/null
++++ b/test/fixtures/users.yml
+@@ -0,0 +1,35 @@
++david:
++  id: 1
++  name: David
++  salary: 80000
++  type: Developer
++
++jamis:
++  id: 2
++  name: Jamis
++  salary: 150000
++  type: Developer
++
++<% for digit in 3..10 %>
++dev_<%= digit %>:
++  id: <%= digit %>
++  name: fixture_<%= digit %>
++  salary: 100000
++  type: Developer
++<% end %>
++
++poor_jamis:
++  id: 11
++  name: Jamis
++  salary: 9000
++  type: Developer
++
++admin:
++  id: 12
++  name: admin
++  type: Admin
++
++goofy:
++  id: 13
++  name: Goofy
++  type: Admin
+diff --git a/test/helper.rb b/test/helper.rb
+new file mode 100644
+index 0000000..7ae5f3b
+--- /dev/null
++++ b/test/helper.rb
+@@ -0,0 +1,37 @@
++require 'test/unit'
++require 'rubygems'
++
++# gem install redgreen for colored test output
++begin require 'redgreen'; rescue LoadError; end
++
++require 'boot' unless defined?(ActiveRecord)
++
++class Test::Unit::TestCase
++  protected
++  def assert_respond_to_all object, methods
++    methods.each do |method|
++      [method.to_s, method.to_sym].each { |m| assert_respond_to object, m }
++    end
++  end
++  
++  def collect_deprecations
++    old_behavior = WillPaginate::Deprecation.behavior
++    deprecations = []
++    WillPaginate::Deprecation.behavior = Proc.new do |message, callstack|
++      deprecations << message
++    end
++    result = yield
++    [result, deprecations]
++  ensure
++    WillPaginate::Deprecation.behavior = old_behavior
++  end
++end
++
++# Wrap tests that use Mocha and skip if unavailable.
++def uses_mocha(test_name)
++  require 'mocha' unless Object.const_defined?(:Mocha)
++rescue LoadError => load_error
++  $stderr.puts "Skipping #{test_name} tests. `gem install mocha` and try again."
++else
++  yield
++end
+diff --git a/test/lib/activerecord_test_case.rb b/test/lib/activerecord_test_case.rb
+new file mode 100644
+index 0000000..375b86a
+--- /dev/null
++++ b/test/lib/activerecord_test_case.rb
+@@ -0,0 +1,36 @@
++require 'lib/activerecord_test_connector'
++
++class ActiveRecordTestCase < Test::Unit::TestCase
++  # Set our fixture path
++  if ActiveRecordTestConnector.able_to_connect
++    self.fixture_path = File.join(File.dirname(__FILE__), '..', 'fixtures')
++    self.use_transactional_fixtures = true
++  end
++
++  def self.fixtures(*args)
++    super if ActiveRecordTestConnector.connected
++  end
++
++  def run(*args)
++    super if ActiveRecordTestConnector.connected
++  end
++
++  # Default so Test::Unit::TestCase doesn't complain
++  def test_truth
++  end
++
++  protected
++
++    def assert_queries(num = 1)
++      $query_count = 0
++      yield
++    ensure
++      assert_equal num, $query_count, "#{$query_count} instead of #{num} queries were executed."
++    end
++
++    def assert_no_queries(&block)
++      assert_queries(0, &block)
++    end
++end
++
++ActiveRecordTestConnector.setup
+diff --git a/test/lib/activerecord_test_connector.rb b/test/lib/activerecord_test_connector.rb
+new file mode 100644
+index 0000000..d06ceaa
+--- /dev/null
++++ b/test/lib/activerecord_test_connector.rb
+@@ -0,0 +1,69 @@
++require 'active_record'
++require 'active_record/version'
++require 'active_record/fixtures'
++
++class ActiveRecordTestConnector
++  cattr_accessor :able_to_connect
++  cattr_accessor :connected
++
++  FIXTURES_PATH = File.join(File.dirname(__FILE__), '..', 'fixtures')
++
++  # Set our defaults
++  self.connected = false
++  self.able_to_connect = true
++
++  def self.setup
++    unless self.connected || !self.able_to_connect
++      setup_connection
++      load_schema
++      Dependencies.load_paths.unshift FIXTURES_PATH
++      self.connected = true
++    end
++  rescue Exception => e  # errors from ActiveRecord setup
++    $stderr.puts "\nSkipping ActiveRecord tests: #{e}"
++    $stderr.puts "Install SQLite3 to run the full test suite for will_paginate.\n\n"
++    self.able_to_connect = false
++  end
++
++  private
++
++  def self.setup_connection
++    db = ENV['DB'].blank?? 'sqlite3' : ENV['DB']
++    
++    configurations = YAML.load_file(File.join(File.dirname(__FILE__), '..', 'database.yml'))
++    raise "no configuration for '#{db}'" unless configurations.key? db
++    configuration = configurations[db]
++    
++    ActiveRecord::Base.logger = Logger.new(STDOUT) if $0 == 'irb'
++    puts "using #{configuration['adapter']} adapter" unless ENV['DB'].blank?
++    
++    ActiveRecord::Base.establish_connection(configuration)
++    ActiveRecord::Base.configurations = { db => configuration }
++    prepare ActiveRecord::Base.connection
++
++    unless Object.const_defined?(:QUOTED_TYPE)
++      Object.send :const_set, :QUOTED_TYPE, ActiveRecord::Base.connection.quote_column_name('type')
++    end
++  end
++
++  def self.load_schema
++    ActiveRecord::Base.silence do
++      ActiveRecord::Migration.verbose = false
++      load File.join(FIXTURES_PATH, 'schema.rb')
++    end
++  end
++
++  def self.prepare(conn)
++    class << conn
++      IGNORED_SQL = [/^PRAGMA/, /^SELECT currval/, /^SELECT CAST/, /^SELECT @@IDENTITY/, /^SELECT @@ROWCOUNT/, /^SHOW FIELDS /]
++
++      def execute_with_counting(sql, name = nil, &block)
++        $query_count ||= 0
++        $query_count  += 1 unless IGNORED_SQL.any? { |r| sql =~ r }
++        execute_without_counting(sql, name, &block)
++      end
++
++      alias_method_chain :execute, :counting
++    end
++  end
++end
+diff --git a/test/lib/load_fixtures.rb b/test/lib/load_fixtures.rb
+new file mode 100644
+index 0000000..65a3450
+--- /dev/null
++++ b/test/lib/load_fixtures.rb
+@@ -0,0 +1,11 @@
++require 'boot'
++require 'lib/activerecord_test_connector'
++
++# setup the connection
++ActiveRecordTestConnector.setup
++
++# load all fixtures
++Fixtures.create_fixtures(ActiveRecordTestConnector::FIXTURES_PATH, ActiveRecord::Base.connection.tables)
++
++require 'will_paginate'
++WillPaginate.enable_activerecord
+diff --git a/test/lib/view_test_process.rb b/test/lib/view_test_process.rb
+new file mode 100644
+index 0000000..fc5d8ec
+--- /dev/null
++++ b/test/lib/view_test_process.rb
+@@ -0,0 +1,165 @@
++require 'action_controller'
++require 'action_controller/test_process'
++
++require 'will_paginate'
++WillPaginate.enable_actionpack
++
++ActionController::Routing::Routes.draw do |map|
++  map.connect 'dummy/page/:page', :controller => 'dummy'
++  map.connect 'dummy/dots/page.:page', :controller => 'dummy', :action => 'dots'
++  map.connect 'ibocorp/:page', :controller => 'ibocorp',
++                               :requirements => { :page => /\d+/ },
++                               :defaults => { :page => 1 }
++                               
++  map.connect ':controller/:action/:id'
++end
++
++ActionController::Base.perform_caching = false
++
++class WillPaginate::ViewTestCase < Test::Unit::TestCase
++  def setup
++    super
++    @controller  = DummyController.new
++    @request     = @controller.request
++    @html_result = nil
++    @template    = '<%= will_paginate collection, options %>'
++    
++    @view = ActionView::Base.new
++    @view.assigns['controller'] = @controller
++    @view.assigns['_request']   = @request
++    @view.assigns['_params']    = @request.params
++  end
++
++  def test_no_complain; end
++  
++  protected
++
++    def paginate(collection = {}, options = {}, &block)
++      if collection.instance_of? Hash
++        page_options = { :page => 1, :total_entries => 11, :per_page => 4 }.merge(collection)
++        collection = [1].paginate(page_options)
++      end
++
++      locals = { :collection => collection, :options => options }
++
++      if defined? ActionView::InlineTemplate
++        # Rails 2.1
++        args = [ ActionView::InlineTemplate.new(@view, @template, locals) ]
++      else
++        # older Rails versions
++        args = [nil, @template, nil, locals]
++      end
++      
++      @html_result = @view.render_template(*args)
++      @html_document = HTML::Document.new(@html_result, true, false)
++
++      if block_given?
++        classname = options[:class] || WillPaginate::ViewHelpers.pagination_options[:class]
++        assert_select("div.#{classname}", 1, 'no main DIV', &block)
++      end
++    end
++
++    def response_from_page_or_rjs
++      @html_document.root
++    end
++
++    def validate_page_numbers expected, links, param_name = :page
++      param_pattern = /\W#{CGI.escape(param_name.to_s)}=([^&]*)/
++      
++      assert_equal(expected, links.map { |e|
++        e['href'] =~ param_pattern
++        $1 ? $1.to_i : $1
++      })
++    end
++
++    def assert_links_match pattern, links = nil, numbers = nil
++      links ||= assert_select 'div.pagination a[href]' do |elements|
++        elements
++      end
++
++      pages = [] if numbers
++      
++      links.each do |el|
++        assert_match pattern, el['href']
++        if numbers
++          el['href'] =~ pattern
++          pages << ($1.nil?? nil : $1.to_i)
++        end
++      end
++
++      assert_equal numbers, pages, "page numbers don't match" if numbers
++    end
++
++    def assert_no_links_match pattern
++      assert_select 'div.pagination a[href]' do |elements|
++        elements.each do |el|
++          assert_no_match pattern, el['href']
++        end
++      end
++    end
++end
++
++class DummyRequest
++  attr_accessor :symbolized_path_parameters
++  
++  def initialize
++    @get = true
++    @params = {}
++    @symbolized_path_parameters = { :controller => 'foo', :action => 'bar' }
++  end
++  
++  def get?
++    @get
++  end
++
++  def post
++    @get = false
++  end
++
++  def relative_url_root
++    ''
++  end
++
++  def params(more = nil)
++    @params.update(more) if more
++    @params
++  end
++end
++
++class DummyController
++  attr_reader :request
++  attr_accessor :controller_name
++  
++  def initialize
++    @request = DummyRequest.new
++    @url = ActionController::UrlRewriter.new(@request, @request.params)
++  end
++
++  def params
++    @request.params
++  end
++  
++  def url_for(params)
++    @url.rewrite(params)
++  end
++end
++
++module HTML
++  Node.class_eval do
++    def inner_text
++      children.map(&:inner_text).join('')
++    end
++  end
++  
++  Text.class_eval do
++    def inner_text
++      self.to_s
++    end
++  end
++
++  Tag.class_eval do
++    def inner_text
++      childless?? '' : super
++    end
++  end
++end
+diff --git a/test/tasks.rake b/test/tasks.rake
+new file mode 100644
+index 0000000..4090340
+--- /dev/null
++++ b/test/tasks.rake
+@@ -0,0 +1,56 @@
++require 'rake/testtask'
++
++desc 'Test the will_paginate plugin.'
++Rake::TestTask.new(:test) do |t|
++  t.pattern = 'test/**/*_test.rb'
++  t.verbose = true
++  t.libs << 'test'
++end
++
++# I want to specify environment variables at call time
++class EnvTestTask < Rake::TestTask
++  attr_accessor :env
++
++  def ruby(*args)
++    env.each { |key, value| ENV[key] = value } if env
++    super
++    env.keys.each { |key| ENV.delete key } if env
++  end
++end
++
++for configuration in %w( sqlite3 mysql postgres )
++  EnvTestTask.new("test_#{configuration}") do |t|
++    t.pattern = 'test/finder_test.rb'
++    t.verbose = true
++    t.env = { 'DB' => configuration }
++    t.libs << 'test'
++  end
++end
++
++task :test_databases => %w(test_mysql test_sqlite3 test_postgres)
++
++desc %{Test everything on SQLite3, MySQL and PostgreSQL}
++task :test_full => %w(test test_mysql test_postgres)
++
++desc %{Test everything with Rails 1.2.x and 2.0.x gems}
++task :test_all do
++  all = Rake::Task['test_full']
++  ENV['RAILS_VERSION'] = '~>1.2.6'
++  all.invoke 
++  # reset the invoked flag
++  %w( test_full test test_mysql test_postgres ).each do |name|
++    Rake::Task[name].instance_variable_set '@already_invoked', false
++  end
++  # do it again
++  ENV['RAILS_VERSION'] = '~>2.0.2'
++  all.invoke 
++end
++
++task :rcov do
++  excludes = %w( lib/will_paginate/named_scope*
++                 lib/will_paginate/core_ext.rb
++                 lib/will_paginate.rb
++                 rails* )
++  
++  system %[rcov -Itest:lib test/*.rb -x #{excludes.join(',')}]
++end
+diff --git a/test/view_test.rb b/test/view_test.rb
+new file mode 100644
+index 0000000..2c49b5e
+--- /dev/null
++++ b/test/view_test.rb
+@@ -0,0 +1,355 @@
++require 'helper'
++require 'lib/view_test_process'
++
++class AdditionalLinkAttributesRenderer < WillPaginate::LinkRenderer
++  def initialize(link_attributes = nil)
++    super()
++    @additional_link_attributes = link_attributes || { :default => 'true' }
++  end
++
++  def page_link(page, text, attributes = {})
++    @template.link_to text, url_for(page), attributes.merge(@additional_link_attributes)
++  end
++end
++
++class ViewTest < WillPaginate::ViewTestCase
++  
++  ## basic pagination ##
++
++  def test_will_paginate
++    paginate do |pagination|
++      assert_select 'a[href]', 3 do |elements|
++        validate_page_numbers [2,3,2], elements
++        assert_select elements.last, ':last-child', "Next &raquo;"
++      end
++      assert_select 'span', 2
++      assert_select 'span.disabled:first-child', '&laquo; Previous'
++      assert_select 'span.current', '1'
++      assert_equal '&laquo; Previous 1 2 3 Next &raquo;', pagination.first.inner_text
++    end
++  end
++
++  def test_no_pagination_when_page_count_is_one
++    paginate :per_page => 30
++    assert_equal '', @html_result
++  end
++
++  def test_will_paginate_with_options
++    paginate({ :page => 2 },
++             :class => 'will_paginate', :prev_label => 'Prev', :next_label => 'Next') do
++      assert_select 'a[href]', 4 do |elements|
++        validate_page_numbers [1,1,3,3], elements
++        # test rel attribute values:
++        assert_select elements[1], 'a', '1' do |link|
++          assert_equal 'prev start', link.first['rel']
++        end
++        assert_select elements.first, 'a', "Prev" do |link|
++          assert_equal 'prev start', link.first['rel']
++        end
++        assert_select elements.last, 'a', "Next" do |link|
++          assert_equal 'next', link.first['rel']
++        end
++      end
++      assert_select 'span.current', '2'
++    end
++  end
++
++  def test_will_paginate_using_renderer_class
++    paginate({}, :renderer => AdditionalLinkAttributesRenderer) do
++      assert_select 'a[default=true]', 3
++    end
++  end
++
++  def test_will_paginate_using_renderer_instance
++    renderer = WillPaginate::LinkRenderer.new
++    renderer.gap_marker = '<span class="my-gap">~~</span>'
++    
++    paginate({ :per_page => 2 }, :inner_window => 0, :outer_window => 0, :renderer => renderer) do
++      assert_select 'span.my-gap', '~~'
++    end
++    
++    renderer = AdditionalLinkAttributesRenderer.new(:title => 'rendered')
++    paginate({}, :renderer => renderer) do
++      assert_select 'a[title=rendered]', 3
++    end
++  end
++
++  def test_prev_next_links_have_classnames
++    paginate do |pagination|
++      assert_select 'span.disabled.prev_page:first-child'
++      assert_select 'a.next_page[href]:last-child'
++    end
++  end
++
++  def test_full_output
++    paginate
++    expected = <<-HTML
++      <div class="pagination"><span class="disabled prev_page">&laquo; Previous</span>
++      <span class="current">1</span>
++      <a href="/foo/bar?page=2" rel="next">2</a>
++      <a href="/foo/bar?page=3">3</a>
++      <a href="/foo/bar?page=2" class="next_page" rel="next">Next &raquo;</a></div>
++    HTML
++    expected.strip!.gsub!(/\s{2,}/, ' ')
++    
++    assert_dom_equal expected, @html_result
++  end
++
++  def test_escaping_of_urls
++    paginate({:page => 1, :per_page => 1, :total_entries => 2},
++             :page_links => false, :params => { :tag => '<br>' })
++    
++    assert_select 'a[href]', 1 do |links|
++      query = links.first['href'].split('?', 2)[1]
++      assert_equal %w(page=2 tag=%3Cbr%3E), query.split('&amp;').sort
++    end
++  end
++
++  ## advanced options for pagination ##
++
++  def test_will_paginate_without_container
++    paginate({}, :container => false)
++    assert_select 'div.pagination', 0, 'main DIV present when it shouldn\'t'
++    assert_select 'a[href]', 3
++  end
++
++  def test_will_paginate_without_page_links
++    paginate({ :page => 2 }, :page_links => false) do
++      assert_select 'a[href]', 2 do |elements|
++        validate_page_numbers [1,3], elements
++      end
++    end
++  end
++
++  def test_will_paginate_windows
++    paginate({ :page => 6, :per_page => 1 }, :inner_window => 1) do |pagination|
++      assert_select 'a[href]', 8 do |elements|
++        validate_page_numbers [5,1,2,5,7,10,11,7], elements
++        assert_select elements.first, 'a', '&laquo; Previous'
++        assert_select elements.last, 'a', 'Next &raquo;'
++      end
++      assert_select 'span.current', '6'
++      assert_equal '&laquo; Previous 1 2 &hellip; 5 6 7 &hellip; 10 11 Next &raquo;', pagination.first.inner_text
++    end
++  end
++
++  def test_will_paginate_eliminates_small_gaps
++    paginate({ :page => 6, :per_page => 1 }, :inner_window => 2) do
++      assert_select 'a[href]', 12 do |elements|
++        validate_page_numbers [5,1,2,3,4,5,7,8,9,10,11,7], elements
++      end
++    end
++  end
++  
++  def test_container_id
++    paginate do |div|
++      assert_nil div.first['id']
++    end
++    
++    # magic ID
++    paginate({}, :id => true) do |div|
++      assert_equal 'fixnums_pagination', div.first['id']
++    end
++    
++    # explicit ID
++    paginate({}, :id => 'custom_id') do |div|
++      assert_equal 'custom_id', div.first['id']
++    end
++  end
++
++  ## other helpers ##
++  
++  def test_paginated_section
++    @template = <<-ERB
++      <% paginated_section collection, options do %>
++        <%= content_tag :div, '', :id => "developers" %>
++      <% end %>
++    ERB
++    
++    paginate
++    assert_select 'div.pagination', 2
++    assert_select 'div.pagination + div#developers', 1
++  end
++
++  def test_page_entries_info
++    @template = '<%= page_entries_info collection %>'
++    array = ('a'..'z').to_a
++    
++    paginate array.paginate(:page => 2, :per_page => 5)
++    assert_equal %{Displaying strings <b>6&nbsp;-&nbsp;10</b> of <b>26</b> in total},
++      @html_result
++    
++    paginate array.paginate(:page => 7, :per_page => 4)
++    assert_equal %{Displaying strings <b>25&nbsp;-&nbsp;26</b> of <b>26</b> in total},
++      @html_result
++  end
++
++  def test_page_entries_info_with_longer_class_name
++    @template = '<%= page_entries_info collection %>'
++    collection = ('a'..'z').to_a.paginate
++    collection.first.stubs(:class).returns(mock('class', :name => 'ProjectType'))
++    
++    paginate collection
++    assert @html_result.index('project types'), "expected <#{@html_result.inspect}> to mention 'project types'"
++  end
++
++  def test_page_entries_info_with_single_page_collection
++    @template = '<%= page_entries_info collection %>'
++    
++    paginate(('a'..'d').to_a.paginate(:page => 1, :per_page => 5))
++    assert_equal %{Displaying <b>all 4</b> strings}, @html_result
++    
++    paginate(['a'].paginate(:page => 1, :per_page => 5))
++    assert_equal %{Displaying <b>1</b> string}, @html_result
++    
++    paginate([].paginate(:page => 1, :per_page => 5))
++    assert_equal %{No entries found}, @html_result
++  end
++  
++  def test_page_entries_info_with_custom_entry_name
++    @template = '<%= page_entries_info collection, :entry_name => "author" %>'
++    
++    entries = (1..20).to_a
++    
++    paginate(entries.paginate(:page => 1, :per_page => 5))
++    assert_equal %{Displaying authors <b>1&nbsp;-&nbsp;5</b> of <b>20</b> in total}, @html_result
++    
++    paginate(entries.paginate(:page => 1, :per_page => 20))
++    assert_equal %{Displaying <b>all 20</b> authors}, @html_result
++    
++    paginate(['a'].paginate(:page => 1, :per_page => 5))
++    assert_equal %{Displaying <b>1</b> author}, @html_result
++    
++    paginate([].paginate(:page => 1, :per_page => 5))
++    assert_equal %{No authors found}, @html_result
++  end
++  
++  ## parameter handling in page links ##
++  
++  def test_will_paginate_preserves_parameters_on_get
++    @request.params :foo => { :bar => 'baz' }
++    paginate
++    assert_links_match /foo%5Bbar%5D=baz/
++  end
++  
++  def test_will_paginate_doesnt_preserve_parameters_on_post
++    @request.post
++    @request.params :foo => 'bar'
++    paginate
++    assert_no_links_match /foo=bar/
++  end
++  
++  def test_adding_additional_parameters
++    paginate({}, :params => { :foo => 'bar' })
++    assert_links_match /foo=bar/
++  end
++  
++  def test_adding_anchor_parameter
++    paginate({}, :params => { :anchor => 'anchor' })
++    assert_links_match /#anchor$/
++  end
++  
++  def test_removing_arbitrary_parameters
++    @request.params :foo => 'bar'
++    paginate({}, :params => { :foo => nil })
++    assert_no_links_match /foo=bar/
++  end
++    
++  def test_adding_additional_route_parameters
++    paginate({}, :params => { :controller => 'baz', :action => 'list' })
++    assert_links_match %r{\Wbaz/list\W}
++  end
++  
++  def test_will_paginate_with_custom_page_param
++    paginate({ :page => 2 }, :param_name => :developers_page) do
++      assert_select 'a[href]', 4 do |elements|
++        validate_page_numbers [1,1,3,3], elements, :developers_page
++      end
++    end    
++  end
++  
++  def test_complex_custom_page_param
++    @request.params :developers => { :page => 2 }
++    
++    paginate({ :page => 2 }, :param_name => 'developers[page]') do
++      assert_select 'a[href]', 4 do |links|
++        assert_links_match /\?developers%5Bpage%5D=\d+$/, links
++        validate_page_numbers [1,1,3,3], links, 'developers[page]'
++      end
++    end
++  end
++
++  def test_custom_routing_page_param
++    @request.symbolized_path_parameters.update :controller => 'dummy', :action => nil
++    paginate :per_page => 2 do
++      assert_select 'a[href]', 6 do |links|
++        assert_links_match %r{/page/(\d+)$}, links, [2, 3, 4, 5, 6, 2]
++      end
++    end
++  end
++
++  def test_custom_routing_page_param_with_dot_separator
++    @request.symbolized_path_parameters.update :controller => 'dummy', :action => 'dots'
++    paginate :per_page => 2 do
++      assert_select 'a[href]', 6 do |links|
++        assert_links_match %r{/page\.(\d+)$}, links, [2, 3, 4, 5, 6, 2]
++      end
++    end
++  end
++
++  def test_custom_routing_with_first_page_hidden
++    @request.symbolized_path_parameters.update :controller => 'ibocorp', :action => nil
++    paginate :page => 2, :per_page => 2 do
++      assert_select 'a[href]', 7 do |links|
++        assert_links_match %r{/ibocorp(?:/(\d+))?$}, links, [nil, nil, 3, 4, 5, 6, 3]
++      end
++    end
++  end
++
++  ## internal hardcore stuff ##
++
++  class LegacyCollection < WillPaginate::Collection
++    alias :page_count :total_pages
++    undef :total_pages
++  end
++
++  def test_deprecation_notices_with_page_count
++    collection = LegacyCollection.new(1, 1, 2)
++
++    assert_deprecated collection.class.name do
++      paginate collection
++    end
++  end
++  
++  uses_mocha 'view internals' do
++    def test_collection_name_can_be_guessed
++      collection = mock
++      collection.expects(:total_pages).returns(1)
++      
++      @template = '<%= will_paginate options %>'
++      @controller.controller_name = 'developers'
++      @view.assigns['developers'] = collection
++      
++      paginate(nil)
++    end
++  end
++  
++  def test_inferred_collection_name_raises_error_when_nil
++    @template = '<%= will_paginate options %>'
++    @controller.controller_name = 'developers'
++    
++    e = assert_raise ArgumentError do
++      paginate(nil)
++    end
++    assert e.message.include?('@developers')
++  end
++
++  if ActionController::Base.respond_to? :rescue_responses
++    # only on Rails 2
++    def test_rescue_response_hook_presence
++      assert_equal :not_found,
++        ActionController::Base.rescue_responses['WillPaginate::InvalidPage']
++    end
++  end
++  
++end
+diff --git a/will_paginate.gemspec b/will_paginate.gemspec
+new file mode 100644
+index 0000000..74ef32f
+--- /dev/null
++++ b/will_paginate.gemspec
+@@ -0,0 +1,21 @@
++Gem::Specification.new do |s|
++  s.name    = 'will_paginate'
++  s.version = '2.3.2'
++  s.date    = '2008-05-16'
++  
++  s.summary = "Most awesome pagination solution for Rails"
++  s.description = "The will_paginate library provides a simple, yet powerful and extensible API for ActiveRecord pagination and rendering of pagination links in ActionView templates."
++  
++  s.authors  = ['Mislav Marohni-Ç', 'PJ Hyett']
++  s.email    = 'mislav.marohnic@gmail.com'
++  s.homepage = 'http://github.com/mislav/will_paginate/wikis'
++  
++  s.has_rdoc = true
++  s.rdoc_options = ['--main', 'README.rdoc']
++  s.rdoc_options << '--inline-source' << '--charset=UTF-8'
++  s.extra_rdoc_files = ['README.rdoc', 'LICENSE', 'CHANGELOG']
++  s.add_dependency 'activesupport', ['>= 1.4.4']
++  
++  s.files = %w(CHANGELOG LICENSE README.rdoc Rakefile examples examples/apple-circle.gif examples/index.haml examples/index.html examples/pagination.css examples/pagination.sass init.rb lib lib/will_paginate lib/will_paginate.rb lib/will_paginate/array.rb lib/will_paginate/collection.rb lib/will_paginate/core_ext.rb lib/will_paginate/finder.rb lib/will_paginate/named_scope.rb lib/will_paginate/named_scope_patch.rb lib/will_paginate/version.rb lib/will_paginate/view_helpers.rb test test/boot.rb test/collection_test.rb test/console test/database.yml test/finder_test.rb test/fixtures test/fixtures/admin.rb test/fixtures/developer.rb test/fixtures/developers_projects.yml test/fixtures/project.rb test/fixtures/projects.yml test/fixtures/replies.yml test/fixtures/reply.rb test/fixtures/schema.rb test/fixtures/topic.rb test/fixtures/topics.yml test/fixtures/user.rb test/fixtures/users.yml test/helper.rb test/lib test/lib/activerecord_test_case.rb test/lib/activerecord_test_connector.rb test/lib/load_fixtures.rb test/lib/view_test_process.rb test/tasks.rake test/view_test.rb)
++  s.test_files = %w(test/boot.rb test/collection_test.rb test/console test/database.yml test/finder_test.rb test/fixtures test/fixtures/admin.rb test/fixtures/developer.rb test/fixtures/developers_projects.yml test/fixtures/project.rb test/fixtures/projects.yml test/fixtures/replies.yml test/fixtures/reply.rb test/fixtures/schema.rb test/fixtures/topic.rb test/fixtures/topics.yml test/fixtures/user.rb test/fixtures/users.yml test/helper.rb test/lib test/lib/activerecord_test_case.rb test/lib/activerecord_test_connector.rb test/lib/load_fixtures.rb test/lib/view_test_process.rb test/tasks.rake test/view_test.rb)
++end

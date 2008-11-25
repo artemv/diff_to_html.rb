@@ -1,0 +1,175 @@
+Index: app/models/issue.rb
+===================================================================
+--- app/models/issue.rb	(revision 1693)
++++ app/models/issue.rb	(working copy)
+@@ -254,4 +254,9 @@
+   def to_s
+     "#{tracker} ##{id}: #{subject}"
+   end
++
++  def active_versions
++    project.active_versions(:for => self)
++  end
++
+ end
+Index: app/models/project.rb
+===================================================================
+--- app/models/project.rb	(revision 1693)
++++ app/models/project.rb	(working copy)
+@@ -239,6 +239,14 @@
+     end
+   end
+ 
++  def active_versions(options = {})
++    issue = options[:for] if options[:for].is_a?(Issue)
++    versions.select do |v| 
++      !v.completed? || issue && issue.fixed_version && 
++        v.id == issue.fixed_version.id
++    end
++  end
++  
+ protected
+   def validate
+     errors.add(parent_id, " must be a root project") if parent and parent.parent
+Index: app/views/issues/_form.rhtml
+===================================================================
+--- app/views/issues/_form.rhtml	(revision 1693)
++++ app/views/issues/_form.rhtml	(working copy)
+@@ -30,7 +30,7 @@
+                      {:controller => 'projects', :action => 'add_issue_category', :id => @project},
+                      :class => 'small', :tabindex => 199) if authorize_for('projects', 'add_issue_category') %></p>
+ <%= content_tag('p', f.select(:fixed_version_id, 
+-                              (@project.versions.sort.collect {|v| [v.name, v.id]}),
++                              (@issue.active_versions.sort.collect {|v| [v.name, v.id]}),
+                               { :include_blank => true })) unless @project.versions.empty? %>
+ </div>
+ 
+Index: app/views/issues/_form_update.rhtml
+===================================================================
+--- app/views/issues/_form_update.rhtml	(revision 1693)
++++ app/views/issues/_form_update.rhtml	(working copy)
+@@ -5,6 +5,6 @@
+ <div class="splitcontentright">
+ <p><%= f.select :done_ratio, ((0..10).to_a.collect {|r| ["#{r*10} %", r*10] }) %></p>
+ <%= content_tag('p', f.select(:fixed_version_id, 
+-                          (@project.versions.sort.collect {|v| [v.name, v.id]}),
++                          (@issue.active_versions.sort.collect {|v| [v.name, v.id]}),
+                           { :include_blank => true })) unless @project.versions.empty? %>
+ </div>
+Index: app/views/issues/bulk_edit.rhtml
+===================================================================
+--- app/views/issues/bulk_edit.rhtml	(revision 1693)
++++ app/views/issues/bulk_edit.rhtml	(working copy)
+@@ -27,7 +27,7 @@
+ <label><%= l(:field_fixed_version) %>: 
+ <%= select_tag('fixed_version_id', content_tag('option', l(:label_no_change_option), :value => '') +
+                                    content_tag('option', l(:label_none), :value => 'none') +
+-                                   options_from_collection_for_select(@project.versions, :id, :name)) %></label>
++                                   options_from_collection_for_select(@project.active_versions, :id, :name)) %></label>
+ </p>
+ 
+ <p>
+Index: app/views/issues/context_menu.rhtml
+===================================================================
+--- app/views/issues/context_menu.rhtml	(revision 1693)
++++ app/views/issues/context_menu.rhtml	(working copy)
+@@ -20,11 +20,11 @@
+ 		<% end -%>
+ 		</ul>
+ 	</li>
+-	<% unless @project.versions.empty? -%>
++	<% unless @issue.active_versions.empty? -%>
+ 	<li class="folder">			
+ 		<a href="#" class="submenu"><%= l(:field_fixed_version) %></a>
+ 		<ul>
+-		<% @project.versions.sort.each do |v| -%>
++		<% @issue.active_versions.sort.each do |v| -%>
+ 		    <li><%= context_menu_link v.name, {:controller => 'issues', :action => 'edit', :id => @issue, 'issue[fixed_version_id]' => v, :back_to => @back}, :method => :post,
+ 		                              :selected => (v == @issue.fixed_version), :disabled => !@can[:update] %></li>
+ 		<% end -%>
+Index: test/fixtures/issues.yml
+===================================================================
+--- test/fixtures/issues.yml	(revision 1693)
++++ test/fixtures/issues.yml	(working copy)
+@@ -91,4 +91,19 @@
+   status_id: 1
+   start_date: <%= Date.today.to_s(:db) %>
+   due_date: <%= 1.days.from_now.to_date.to_s(:db) %>
+-  
+\ No newline at end of file
++issues_007: 
++  created_on: 2006-07-19 21:04:21 +02:00
++  project_id: 1
++  updated_on: 2006-07-19 21:09:50 +02:00
++  priority_id: 5
++  subject: Some closed issue
++  id: 7
++  fixed_version_id: 1
++  category_id: 
++  description: Some closed issue
++  tracker_id: 2
++  assigned_to_id: 3
++  author_id: 2
++  status_id: 5
++  start_date: <%= 2.day.ago.to_date.to_s(:db) %>
++  due_date: 
+Index: test/unit/issue_test.rb
+===================================================================
+--- test/unit/issue_test.rb	(revision 1693)
++++ test/unit/issue_test.rb	(working copy)
+@@ -181,4 +181,16 @@
+     assert_nil Issue.find_by_id(1)
+     assert_nil TimeEntry.find_by_issue_id(1)
+   end
++
++  def test_active_versions_have_current_even_if_completed
++    issue = issues(:issues_007)
++    assert issue.fixed_version.completed?
++    assert issue.active_versions.include?(issue.fixed_version), 
++      'Even if version is completed it should be considered active for issue assigned to it'
++  end
++
++  def test_active_versions_work_for_new_issue
++    issue = Issue.new(:project_id => projects(:projects_001).id)
++    assert !issue.active_versions.empty?, 'there should be active versions for new issue'
++  end
+ end
+Index: test/unit/project_test.rb
+===================================================================
+--- test/unit/project_test.rb	(revision 1693)
++++ test/unit/project_test.rb	(working copy)
+@@ -18,7 +18,7 @@
+ require File.dirname(__FILE__) + '/../test_helper'
+ 
+ class ProjectTest < Test::Unit::TestCase
+-  fixtures :projects, :issues, :issue_statuses, :journals, :journal_details, :users, :members, :roles, :projects_trackers, :trackers, :boards
++  fixtures :all
+ 
+   def setup
+     @ecookbook = Project.find(1)
+@@ -130,4 +130,25 @@
+     assert_equal [1, 2, 3], parent.rolled_up_trackers.collect(&:id)
+     assert_equal [2, 3], child.rolled_up_trackers.collect(&:id)
+   end
++  
++  def test_active_versions_have_future_versions
++    version = versions(:versions_003)
++    assert !version.completed?
++    assert projects(:projects_001).active_versions.include?(version), 
++      'Future version (or one without effective date) should be included'
++  end  
++
++  def test_active_versions_have_incomplete_versions
++    version = versions(:versions_002)
++    assert !version.completed?
++    assert projects(:projects_001).active_versions.include?(version), 
++      'Incomplete versions should be included'
++  end  
++
++  def test_active_versions_dont_have_completed
++    version = versions(:versions_001)
++    assert version.completed?
++    assert !projects(:projects_001).active_versions.include?(version), 
++      'Completed versions shouldn\'t be included'
++  end  
+ end

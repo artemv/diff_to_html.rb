@@ -1,3 +1,13 @@
+body, p, ol, ul, td {
+  font-family:verdana,arial,helvetica,sans-serif;
+  font-size:13px;
+}
+
+a, a:link, a:visited {
+color:#507EC0;
+text-decoration:none;
+}
+
 ul.diff {
   padding:0;
 }
@@ -6,14 +16,11 @@ ul.diff {
   width:4em;
 }
 
-.diff h2, .diff h2 a {
+.diff h2 {
   color:#333333;
   font-size:14px;
   letter-spacing:normal;
   margin:0pt auto;
-}
-
-.diff h2 {
   padding:0.1em 0pt 0.25em 0.5em;
 }
 

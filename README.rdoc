@@ -17,19 +17,17 @@ things to improve, so contribution/patches are very welcome.
   to copy it to your project's dir to use it.
 * To use in Rails project:
 
-   require 'diff_to_html'
-   ...
-   converter = DiffToHtml.new
-   ...
+    require 'diff_to_html'
+    diff = `cat #{File.join(File.dirname(__FILE__), 'diff.svn')}`
+    converter = SvnDiffToHtml.new #there's also GitDiffToHtml
+    puts converter.composite_to_html(diff)
 
 * to use in any Ruby program:
    
-   require 'rubygems'
-   require 'diff_to_html'
-   ...
-
-(just like in test.rb)
-   
+    require 'rubygems'
+    require 'diff_to_html'
+    ...
+  
 == License
 
 diff_to_html is released under the MIT license.
