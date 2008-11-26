@@ -53,7 +53,7 @@ class DiffToHtml
   end
 
   def range_row(range)
-    "<tr class='range'><td>...</td<td>...</td><td>#{range}</td></tr>"
+    "<tr class='range'><td>...</td><td>...</td><td>#{range}</td></tr>"
   end
 
   def range_info(range)
